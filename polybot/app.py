@@ -1,17 +1,42 @@
 import flask
 from flask import request
 import os
+import boto3
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
+from bot import Bot
 from bot import ObjectDetectionBot
+import logging
+import json
+from bot_functions import get_secret, load_telegram_token
 
 app = flask.Flask(__name__)
 
+# Initialize DynamoDB client
+dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
+table = dynamodb.Table('shantal-dynamoDB-aws')
+
+# from the dockerfile
+TELEGRAM_APP_URL = os.getenv('TELEGRAM_APP_URL')
+print(f"telegram app url: {TELEGRAM_APP_URL}")
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
+
+
+# Get secret of public key (the certificate to use HTTPS in Telegram)
+public_key_value = get_secret("shantal-YOURPUBLICpem", "us-east-2")
+print(f"Retrieved Public Key Value: {public_key_value}")
 
 # TODO load TELEGRAM_TOKEN value from Secret Manager
-TELEGRAM_TOKEN = ...
 
-TELEGRAM_APP_URL = os.environ['TELEGRAM_APP_URL']
+TELEGRAM_TOKEN = load_telegram_token()
+if TELEGRAM_TOKEN:
+    print(f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}")
+    bot = ObjectDetectionBot(TELEGRAM_TOKEN, TELEGRAM_APP_URL, public_key_value)
 
 
+# Health checks on ALB
 @app.route('/', methods=['GET'])
 def index():
     return 'Ok'
@@ -24,17 +49,34 @@ def webhook():
     return 'Ok'
 
 
-@app.route(f'/results', methods=['POST'])
+@app.route(f'/results', methods=['GET'])
 def results():
     prediction_id = request.args.get('predictionId')
+    if not prediction_id:
+        return 'Missing predictionId', 400
 
     # TODO use the prediction_id to retrieve results from DynamoDB and send to the end-user
+    logger.info(f'Received request for predictionId: {prediction_id}')
 
-    chat_id = ...
-    text_results = ...
+    try:
+        response = table.get_item(Key={'prediction_id': prediction_id})
 
-    bot.send_text(chat_id, text_results)
-    return 'Ok'
+        item = response['Item']
+        chat_id = item.get('chat_id') # done
+        labels = item.get('labels') # done
+
+        # Format the results for sending via Telegram
+        text_results = "\n".join([f"Class: {label['class']}, Coordinates: ({label['cx']}, {label['cy']}), Size: ({label['width']}, {label['height']})" for label in labels])
+
+        # Send the message via Telegram
+        bot.send_text(chat_id, text_results)
+
+        logger.info(f'Results for predictionId {prediction_id} successfully sent to chat_id {chat_id}')
+        return 'Results sent', 200
+
+    except Exception as e:
+        logger.error(f'An error occurred while processing predictionId {prediction_id}: {str(e)}')
+        return 'Internal server error', 500
 
 
 @app.route(f'/loadTest/', methods=['POST'])
@@ -45,6 +87,8 @@ def load_test():
 
 
 if __name__ == "__main__":
-    bot = ObjectDetectionBot(TELEGRAM_TOKEN, TELEGRAM_APP_URL)
-
-    app.run(host='0.0.0.0', port=8443)
+    if TELEGRAM_TOKEN:
+        bot = ObjectDetectionBot(TELEGRAM_TOKEN, TELEGRAM_APP_URL, public_key_value)
+        app.run(host='0.0.0.0', port=8443)
+    else:
+        logger.error("Application could not start due to missing TELEGRAM_TOKEN.")
