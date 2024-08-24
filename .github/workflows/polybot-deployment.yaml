@@ -17,16 +17,9 @@ jobs:
   BuildPolybot:
     runs-on: ubuntu-latest
     steps:
+      -
       - name: Checkout the repo code
         uses: actions/checkout@v2
-
-#      - name: Build and push YOLO5 image to DockerHub
-#        run: |
-#          cd yolo5
-#          docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
-#          IMAGE_NAME=shantalberkhof/my_yolo5:v2
-#          docker build -t $IMAGE_NAME .
-#          docker push $IMAGE_NAME
 
       - name: Build and push Polybot image to DockerHub
         run: |
@@ -47,6 +40,14 @@ jobs:
     needs:
       - BuildPolybot
     steps:
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
     - name: Deploy to AWS EC2
       run: |
         IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_polybot:${{ github.run_number }}
