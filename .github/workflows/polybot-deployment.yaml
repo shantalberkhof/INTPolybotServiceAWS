@@ -96,7 +96,11 @@ jobs:
               echo "SSH connection successful to $PUBLIC_IP"
 #              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
 #              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
-               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "docker stop my_polybot 2>/dev/null && docker rm my_polybot 2>/dev/null" # No such container: my_polybot
+
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "docker stop my_polybot" 2>/dev/null
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "docker rm my_polybot" 2>/dev/null
+        
+        #               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "docker stop my_polybot 2>/dev/null && docker rm my_polybot 2>/dev/null" # No such container: my_polybot
 #               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot 2>/dev/null || true" # No such container: my_polybot
 #              if [[ $(sudo docker ps -aq -f name=my_polybot) ]]; then
 #                ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
