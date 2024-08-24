@@ -30,8 +30,11 @@ jobs:
 
       - name: Set up SSH key
         run: |
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key.pem
-          chmod 600 private_key.pem
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key1.pem
+          chmod 600 private_key1.pem          
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY2 }}" > private_key2.pem
+          chmod 600 private_key2.pem
+      
 
   DeployPolybot: # step 2
     name: Deploy to Polybot EC2 Instance
@@ -50,11 +53,16 @@ jobs:
       run: |
         IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_polybot:v2
         
-        echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key.pem
-        chmod 400 private_key.pem
+        echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key1.pem
+        chmod 400 private_key1.pem          
+        echo "${{ secrets.EC2_SSH_PRIVATE_KEY2 }}" > private_key2.pem
+        chmod 400 private_key2.pem
+        
         POLYBOT_INSTANCES=$(aws elbv2 describe-target-health --target-group-arn ${{ secrets.POLYBOT_TARGET_GROUP_ARN }} --query 'TargetHealthDescriptions[*].Target.Id' --output text --region ${{ secrets.AWS_REGION }})
         echo "POLYBOT_INSTANCES: $POLYBOT_INSTANCES"
         
+          
+        CurKey = private_key1.pem
         for instance in $POLYBOT_INSTANCES; do
           INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $instance --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }})
         
@@ -79,19 +87,21 @@ jobs:
           # Retry SSH connection up to 5 times with a delay
           for attempt in {1..5}; do
             echo "Attempt $attempt to connect to $PUBLIC_IP"
-            if ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP "echo 'SSH connection successful'"; then
+            if ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "echo 'SSH connection successful'"; then
               echo "SSH connection successful to $PUBLIC_IP"
-              ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
-              ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
         
-              ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP " sudo docker pull ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/$IMAGE_NAME"
-              ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP "sudo docker run -d --restart always --name my_polybot -p 8443:8443 ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/IMAGE_NAME"
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP " sudo docker pull ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/$IMAGE_NAME"
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker run -d --restart always --name my_polybot -p 8443:8443 ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/$IMAGE_NAME"
               break
             else
               echo "SSH connection to $PUBLIC_IP failed. Retrying in 10 seconds..."
               sleep 10
             fi
           done
+          CurKey = private_key2.pem
+
         done
       env:
         AWS_REGION: ${{ secrets.AWS_REGION }}
