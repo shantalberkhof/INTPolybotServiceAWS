@@ -101,7 +101,6 @@ jobs:
               echo "my_polybot search result $result"
               if [ "$result" == "" ]; then
                 echo "result == nothing"             
-              fi
               else
 #              if [ $(sudo docker ps -aq -f name=my_polybot) ]; then
                 echo "Container my_polybot exists. Stops & removes it."
