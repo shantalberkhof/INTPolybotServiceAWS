@@ -61,8 +61,7 @@ jobs:
         POLYBOT_INSTANCES=$(aws elbv2 describe-target-health --target-group-arn ${{ secrets.POLYBOT_TARGET_GROUP_ARN }} --query 'TargetHealthDescriptions[*].Target.Id' --output text --region ${{ secrets.AWS_REGION }})
         echo "POLYBOT_INSTANCES: $POLYBOT_INSTANCES"
         
-          
-        CurKey = private_key1.pem
+        CurKey=private_key1.pem
         for instance in $POLYBOT_INSTANCES; do
           INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $instance --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }})
         
@@ -100,7 +99,7 @@ jobs:
               sleep 10
             fi
           done
-          CurKey = private_key2.pem
+          CurKey=private_key2.pem
 
         done
       env:
