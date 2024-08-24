@@ -81,7 +81,7 @@ jobs:
             echo "No public IP found for instance $instance"
             continue
           fi
-        
+         
           CurKey=private_key1.pem
         
           if [ "$PUBLIC_IP" == "3.138.153.210" ]; then
