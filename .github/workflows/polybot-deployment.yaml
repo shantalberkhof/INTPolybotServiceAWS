@@ -25,8 +25,8 @@ jobs:
           cd polybot
           docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
           IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_polybot:v2
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME
+          docker build -t IMAGE_NAME .
+          docker push IMAGE_NAME
 
       - name: Set up SSH key
         run: |
@@ -84,7 +84,7 @@ jobs:
               ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
               ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
         
-              ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP " sudo docker pull ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/IMAGE_NAME"
+              ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP " sudo docker pull ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/$IMAGE_NAME"
               ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP "sudo docker run -d --restart always --name my_polybot -p 8443:8443 ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/IMAGE_NAME"
               break
             else
