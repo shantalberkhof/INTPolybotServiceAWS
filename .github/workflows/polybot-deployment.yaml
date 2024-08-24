@@ -7,6 +7,7 @@ on:
     branches:
       - main
 
+
 env:
   EC2_PUBLIC_IP_POLYBOT1: 3.145.100.236
   EC2_PUBLIC_IP_POLYBOT2: 18.222.135.96
@@ -95,12 +96,10 @@ jobs:
               echo "SSH connection successful to $PUBLIC_IP"
               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
-#              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot 2>/dev/null || true"
-#              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot 2>/dev/null || true"
-#              if [[ $(sudo docker ps -aq -f name=my_polybot) ]]; then
-#                ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
-#                ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
-#              fi
+              if [[ $(sudo docker ps -aq -f name=my_polybot) ]]; then
+                ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
+                ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
+              fi
         
               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker pull $IMAGE_NAME"
               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker run -d --restart always --name my_polybot -p 8443:8443 $IMAGE_NAME"
