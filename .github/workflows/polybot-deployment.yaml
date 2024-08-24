@@ -61,7 +61,7 @@ jobs:
         POLYBOT_INSTANCES=$(aws elbv2 describe-target-health --target-group-arn ${{ secrets.POLYBOT_TARGET_GROUP_ARN }} --query 'TargetHealthDescriptions[*].Target.Id' --output text --region ${{ secrets.AWS_REGION }})
         echo "POLYBOT_INSTANCES: $POLYBOT_INSTANCES"
         
-        CurKey=private_key1.pem
+        CurKey=private_key2.pem
         for instance in $POLYBOT_INSTANCES; do
           INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $instance --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }})
         
@@ -82,6 +82,11 @@ jobs:
             echo "No public IP found for instance $instance"
             continue
           fi
+        
+          CurKey=private_key1.pem
+          if [ "$EC2_PUBLIC_IP_POLYBOT2" == "$PUBLIC_IP"]; then
+            CurKey=private_key2.pem
+          fi
           echo "Instance ID: $instance, Public IP: $PUBLIC_IP, CurKey: $CurKey"              
           
           # Retry SSH connection up to 5 times with a delay
@@ -94,15 +99,12 @@ jobs:
         
               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP " sudo docker pull $IMAGE_NAME"
               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker run -d --restart always --name my_polybot -p 8443:8443 $IMAGE_NAME"
-              CurKey=private_key2.pem
               break
             else
               echo "SSH connection to $PUBLIC_IP failed. Retrying in 10 seconds..."
               sleep 10
             fi
           done
-          CurKey=private_key2.pem
-
         done
       env:
         AWS_REGION: ${{ secrets.AWS_REGION }}

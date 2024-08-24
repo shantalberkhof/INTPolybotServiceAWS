@@ -111,7 +111,7 @@ class ObjectDetectionBot(Bot):
         count = 1  # Specify how many times to send the same image
         if msg.get('caption', '').lower() == "test":
             logger.info(f'Caption is test.')
-            count = 50 # Specify how many times to send the same image
+            count = 45 # Specify how many times to send the same image
             logger.info(f'Received "test" command. Sending {count} photos.')
 
         self.send_multiple_photos(msg, count)
