@@ -101,13 +101,13 @@ jobs:
 #              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "docker stop my_polybot"
 #              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "docker rm my_polybot"
 
-             ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "
-               set +e
-               sudo docker stop my_polybot
-               sudo docker rm my_polybot
-               set -e
-               sudo docker run --name my_polybot -p 8443:8443 shantalberkhof/my_polybot:v2
-             "        
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "
+                set +e
+                sudo docker stop my_polybot
+                sudo docker rm my_polybot
+                set -e
+                sudo docker run --name my_polybot -p 8443:8443 shantalberkhof/my_polybot:v2
+              "        
         
         #               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "docker stop my_polybot 2>/dev/null && docker rm my_polybot 2>/dev/null" # No such container: my_polybot
 #               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot 2>/dev/null || true" # No such container: my_polybot
