@@ -25,8 +25,8 @@ jobs:
           cd polybot
           docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
           IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_polybot:v2
-          docker build -t IMAGE_NAME .
-          docker push IMAGE_NAME
+          docker build -t $IMAGE_NAME .
+          docker push $IMAGE_NAME
 
       - name: Set up SSH key
         run: |
