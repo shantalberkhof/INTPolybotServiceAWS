@@ -9,103 +9,170 @@ on:
       - main
 
 env:
-  TAG_KEY: Name
-  TAG_VALUE: shantal-aws-yolo1
-  BUCKET_NAME: shantal-awsproject
-  SQS_QUEUE_NAME: shantal-queue-aws
-  EC2_PUBLIC_IP_POLYBOT1: 3.12.36.67
-  EC2_PUBLIC_IP_POLYBOT2: 18.218.202.104
+  EC2_PUBLIC_IP_POLYBOT1: 3.136.20.50
+  EC2_PUBLIC_IP_POLYBOT2: 3.138.153.210
 
 jobs:
-  FetchIPs:
+  BuildPolybot:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo code
         uses: actions/checkout@v2
 
-      - name: Fetch YOLO5 EC2 Public IPs
-        run: |
-          echo "Fetching instance IDs based on tag..."
-          INSTANCE_IDS=$(aws ec2 describe-instances \
-            --filters "Name=tag:${TAG_KEY},Values=${TAG_VALUE}" \
-            --query "Reservations[*].Instances[*].InstanceId" \
-            --output text)
+#      - name: Build and push YOLO5 image to DockerHub
+#        run: |
+#          cd yolo5
+#          docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
+#          IMAGE_NAME=shantalberkhof/my_yolo5:v2
+#          docker build -t $IMAGE_NAME .
+#          docker push $IMAGE_NAME
 
-          echo "Fetching public IPs for YOLO5 instances..."
-          EC2_PUBLIC_IP_YOLO5=""
-          for id in $INSTANCE_IDS; do
-            PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $id \
-              --query "Reservations[*].Instances[*].PublicIpAddress" \
-              --output text)
-            EC2_PUBLIC_IP_YOLO5+="$PUBLIC_IP "
-          done
-
-          echo "EC2_PUBLIC_IP_YOLO5=$EC2_PUBLIC_IP_YOLO5" >> $GITHUB_ENV
-          echo "Public IPs: $EC2_PUBLIC_IP_YOLO5"
-
-  Build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the repo code
-        uses: actions/checkout@v2
-
-      - name: Build and push YOLO5 image
-        run: |
-          cd yolo5
-          docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
-          IMAGE_NAME=shantalberkhof/my_yolo5:v2
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME
-
-      - name: Build and push Polybot image
+      - name: Build and push Polybot image to DockerHub
         run: |
           cd polybot
           docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
-          IMAGE_NAME=shantalberkhof/my_polybot:v2
+          IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_polybot:${{ github.run_number }}
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
 
-  Deploy:
-    name: Deploy to Polybot and YOLOv5 EC2 Instances
+      - name: Set up SSH key
+        run: |
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key.pem
+          chmod 600 private_key.pem
+
+  DeployPolybot: # step 2
+    name: Deploy to Polybot EC2 Instance
     runs-on: ubuntu-latest
     needs:
-      - FetchIPs
-      - Build
+      - BuildPolybot
     steps:
-      - name: Checkout the repo code
-        uses: actions/checkout@v2
-
-      - name: Deploy to Polybot EC2 Instance 1
-        run: |
-          echo "Deploying to Polybot instance 1..."
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY1 }} ubuntu@${{ env.EC2_PUBLIC_IP_POLYBOT1 }} << EOF
-            docker pull shantalberkhof/my_polybot:v2
-            docker stop my_polybot || true
-            docker rm my_polybot || true
-            docker run -d -p 8443:8443 --name my_polybot shantalberkhof/my_polybot:v2
-          EOF
-
-      - name: Deploy to Polybot EC2 Instance 2
-        run: |
-          echo "Deploying to Polybot instance 2..."
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY2 }} ubuntu@${{ env.EC2_PUBLIC_IP_POLYBOT2 }} << EOF
-            docker pull shantalberkhof/my_polybot:v2
-            docker stop my_polybot || true
-            docker rm my_polybot || true
-            docker run -d -p 8443:8443 --name my_polybot shantalberkhof/my_polybot:v2
-          EOF
-
-      - name: Deploy to YOLO5 EC2 Instances
-        run: |
-          echo "Deploying to YOLO5 instances..."
-          for IP in ${{ env.EC2_PUBLIC_IP_YOLO5 }}; do
-            ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY1 }} ubuntu@$IP << EOF
-              docker pull shantalberkhof/my_yolo5:v2
-              docker stop my_yolo5 || true
-              docker rm my_yolo5 || true
-              docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2
-            EOF
+    - name: Deploy to AWS EC2
+      run: |
+        IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_polybot:${{ github.run_number }}
+        
+        echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key.pem
+        chmod 400 private_key.pem
+        POLYBOT_INSTANCES=$(aws elbv2 describe-target-health --target-group-arn ${{ secrets.POLYBOT_TARGET_GROUP_ARN }} --query 'TargetHealthDescriptions[*].Target.Id' --output text --region ${{ secrets.AWS_REGION }})
+        echo "POLYBOT_INSTANCES: $POLYBOT_INSTANCES"
+        
+        for instance in $POLYBOT_INSTANCES; do
+          INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $instance --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }})
+        
+        
+          if [ "$INSTANCE_STATE" != "running" ]; then
+            echo "Instance $instance is $INSTANCE_STATE. Starting the instance..."
+            aws ec2 start-instances --instance-ids $instance --region ${{ secrets.AWS_REGION }}
+        
+            echo "Waiting for instance $instance to be in running state..."
+            aws ec2 wait instance-running --instance-ids $instance --region ${{ secrets.AWS_REGION }}
+          fi
+        
+          INSTANCE_INFO=$(aws ec2 describe-instances --instance-ids $instance --query 'Reservations[0].Instances[0]' --output json --region ${{ secrets.AWS_REGION }})
+          echo "Instance Info: $INSTANCE_INFO"
+          PUBLIC_IP=$(echo $INSTANCE_INFO | jq -r '.PublicIpAddress')
+        
+          if [ "$PUBLIC_IP" == "null" ] || [ -z "$PUBLIC_IP" ]; then
+            echo "No public IP found for instance $instance"
+            continue
+          fi
+          echo "Instance ID: $instance, Public IP: $PUBLIC_IP"
+          # Retry SSH connection up to 5 times with a delay
+          for attempt in {1..5}; do
+            echo "Attempt $attempt to connect to $PUBLIC_IP"
+            if ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP "echo 'SSH connection successful'"; then
+              echo "SSH connection successful to $PUBLIC_IP"
+              ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
+              ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
+        
+              ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP " sudo docker pull ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/IMAGE_NAME"
+              ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP "sudo docker run -d --restart always --name my_polybot -p 8443:8443 ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/IMAGE_NAME"
+              break
+            else
+              echo "SSH connection to $PUBLIC_IP failed. Retrying in 10 seconds..."
+              sleep 10
+            fi
           done
+        done
+      env:
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+
+
+
+
+
+#      - name: Copy Compose files to the Polybot EC2 Instance 1
+#        uses: appleboy/scp-action@master
+#        with:
+#          host: ${{ env.EC2_PUBLIC_IP }}
+#          username: ubuntu
+#          key: ${{ secrets.EC2_SSH_PRIVATE_KEY1 }}
+#          source: docker-compose.yaml
+#          target: PolybotService/
+#      - name: Update the Docker Compose project in the Polybot EC2 Instance 1 #ADDED
+#        uses: appleboy/ssh-action@master
+#        with:
+#          host: env.EC2_PUBLIC_IP_POLYBOT1
+#          username: ubuntu
+#          key: ${{ secrets.EC2_SSH_PRIVATE_KEY1 }}
+#          script: |
+#
+#            sudo apt update && sudo apt install jq -y
+#
+#            cd polybot/
+#
+#            # Generate .env file
+#            echo """
+#            POLYBOT_IMG_NAME=shantalberkhof/polybot:${{ github.run_number }}
+#            YOLO5_IMG_NAME=shantalberkhof/yolo5:${{ github.run_number }}
+#            TELEGRAM_APP_URL=https://outgoing-amusing-ram.ngrok-free.app
+#            TELEGRAM_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+#            """ > .env
+#
+#            # Take the service down
+#            docker compose down
+#
+#            # Take it up with the current updated values
+#            docker compose up -d
+
+
+#        run: |
+#          echo "Deploying to Polybot instance 1..."
+#          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY1 }} ubuntu@${{ env.EC2_PUBLIC_IP_POLYBOT1 }} << EOF
+#            docker pull shantalberkhof/my_polybot:v2
+#            docker stop my_polybot || true
+#            docker rm my_polybot || true
+#            docker run -d -p 8443:8443 --name my_polybot shantalberkhof/my_polybot:v2
+#          EOF
+#
+#      - name: Deploy to Polybot EC2 Instance 2
+#        run: |
+#          echo "Deploying to Polybot instance 2..."
+#          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY2 }} ubuntu@${{ env.EC2_PUBLIC_IP_POLYBOT2 }} << EOF
+#            docker pull shantalberkhof/my_polybot:v2
+#            docker stop my_polybot || true
+#            docker rm my_polybot || true
+#            docker run -d -p 8443:8443 --name my_polybot shantalberkhof/my_polybot:v2
+#          EOF
+
+#      - name: Deploy to YOLO5 EC2 Instances
+#        run: |
+#          echo "Deploying to YOLO5 instances..."
+#          for IP in ${{ env.EC2_PUBLIC_IP_YOLO5 }}; do
+#            ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY1 }} ubuntu@$IP << EOF
+#              docker pull shantalberkhof/my_yolo5:v2
+#              docker stop my_yolo5 || true
+#              docker rm my_yolo5 || true
+#              docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2
+#            EOF
+#          done
+#
+#          # ????
+#          # Take the service down
+#          docker compose down
+#
+#          # Take it up with the current updated values
+#          docker compose up -d
+
 
 #  Deploy:
 #    runs-on: ubuntu-latest
@@ -144,128 +211,7 @@ jobs:
 
 
 # ------------------------------------------------------------
-# Advanced code:
 
-#
-#name: Polybot Microservice Deployment
-#
-#on:
-#  push:
-#    paths:
-#      - 'polybot/**'
-#    branches:
-#      - main
-#
-#jobs:
-#  Build:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout the repo code
-#        uses: actions/checkout@v2
-#
-#      - name: Build and push image
-#        run: |
-#          cd polybot
-#
-#          # Login to DockerHub
-#          docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
-#
-#          # Build and push Docker image
-#          # POLYBOT_IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/polybot:0.0.${{ github.run_number }}
-#          POLYBOT_IMAGE_NAME=shantalberkhof/my_polybot:v2
-#          docker build -t $POLYBOT_IMAGE_NAME .
-#          docker push $POLYBOT_IMAGE_NAME
-#
-#  Deploy:
-#    runs-on: ubuntu-latest
-#    needs: Build
-#
-#    steps:
-#      - name: Checkout the repo code
-#        uses: actions/checkout@v2
-#
-#      - name: Configure AWS Credentials
-#        uses: aws-actions/configure-aws-credentials@v1
-#        with:
-#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws-region: us-east-2
-#
-#      - name: Fetch EC2 Instance Details
-#        id: fetch-details
-#        run: |
-#          EC2_INSTANCE_DETAILS=$(aws ec2 describe-instances --region eu-west-2 --filters "Name=tag:Name,Values=polybot" "Name=tag:Name,Values=yaelwil" --query 'Reservations[].Instances[].[InstanceId,State.Name,PublicIpAddress]' --output json)
-#          echo "$EC2_INSTANCE_DETAILS" > instance_details.json
-#
-#          EC2_INSTANCE_IDS=$(echo "$EC2_INSTANCE_DETAILS" | jq -r '.[][] | select(.[1] == "stopped") | .[0]' | tr '\n' ' ')
-#          EC2_POLYBOT_IP_ADDRESSES=$(echo "$EC2_INSTANCE_DETAILS" | jq -r '.[][] | select(.[1] == "running") | .[2]' | tr '\n' ' ')
-#          echo "EC2_INSTANCE_IDS=$EC2_INSTANCE_IDS" >> $GITHUB_ENV
-#          echo "EC2_POLYBOT_IP_ADDRESSES=$EC2_POLYBOT_IP_ADDRESSES" >> $GITHUB_ENV
-#
-#      - name: Start Stopped Instances
-#        if: env.EC2_INSTANCE_IDS != ''
-#        run: |
-#          for INSTANCE_ID in ${{ env.EC2_INSTANCE_IDS }}; do
-#            echo "Starting instance $INSTANCE_ID"
-#            aws ec2 start-instances --instance-ids $INSTANCE_ID --region eu-west-2
-#          done
-#
-#      - name: Wait for Instances to be Running
-#        if: env.EC2_INSTANCE_IDS != ''
-#        run: |
-#          for INSTANCE_ID in ${{ env.EC2_INSTANCE_IDS }}; do
-#            echo "Waiting for instance $INSTANCE_ID to be running"
-#            aws ec2 wait instance-running --instance-ids $INSTANCE_ID --region eu-west-2
-#          done
-#
-#      - name: Fetch EC2 Instance IP Addresses Again
-#        if: env.EC2_INSTANCE_IDS != ''
-#        run: |
-#          NEW_RUNNING_INSTANCE_IPS=$(aws ec2 describe-instances --region eu-west-2 --instance-ids ${{ env.EC2_INSTANCE_IDS }} --query 'Reservations[].Instances[].PublicIpAddress' --output text | grep -v 'None' | tr '\n' ' ')
-#          echo "NEW_RUNNING_INSTANCE_IPS=$NEW_RUNNING_INSTANCE_IPS" >> $GITHUB_ENV
-#          # Ensure proper formatting of IP addresses
-#          EC2_POLYBOT_IP_ADDRESSES="$EC2_POLYBOT_IP_ADDRESSES $NEW_RUNNING_INSTANCE_IPS"
-#          EC2_POLYBOT_IP_ADDRESSES=$(echo $EC2_POLYBOT_IP_ADDRESSES | xargs)
-#          echo "EC2_POLYBOT_IP_ADDRESSES=$EC2_POLYBOT_IP_ADDRESSES" >> $GITHUB_ENV
-#
-#      - name: Generate .env file
-#        run: |
-#          echo "BUCKET_NAME=
-#          TELEGRAM_APP_URL=
-#          REGION=eu-west-2
-#          DYNAMODB_TABLE_NAME=
-#          YOLO_QUEUE_NAME
-#          FILTERS_QUEUE_NAME=
-#          ALB_URL= "> .env
-#
-#      - name: Create SSH key file + Copy ENV file to EC2 instances
-#        run: |
-#          POLYBOT_IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/polybot:0.0.${{ github.run_number }}
-#          echo "${{ secrets.PRIVATE_KEY }}" >> ssh_key.pem
-#          sudo chmod 400 ssh_key.pem
-#          # Split IP addresses into an array
-#          IFS=' ' read -r -a IPS <<< "$EC2_POLYBOT_IP_ADDRESSES"
-#          for IP in "${IPS[@]}"; do
-#            echo "Deploying to $IP"
-#            ssh -o StrictHostKeyChecking=no -i ssh_key.pem ubuntu@$IP << EOF
-#              docker pull $POLYBOT_IMAGE_NAME || { echo "Failed to pull image on $IP"; exit 1; }
-#              sudo docker stop polybot || true
-#              sudo docker rm polybot || true
-#              sudo docker run -d -p 8443:8443 -v /var/run/docker.sock:/var/run/docker.sock --restart=always --name polybot --env-file /home/ubuntu/.env $POLYBOT_IMAGE_NAME || { echo "Failed to run container on $IP"; exit 1; }
-#          EOF
-#          done
-#        env:
-#          AWS_DEFAULT_REGION: eu-west-2
-#          AWS_REGION: eu-west-2
-#          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          EC2_INSTANCE_IDS: ${{ env.EC2_INSTANCE_IDS }}
-#          EC2_POLYBOT_IP_ADDRESSES: ${{ env.EC2_POLYBOT_IP_ADDRESSES }}
-#          NEW_RUNNING_INSTANCE_IPS: ${{ env.NEW_RUNNING_INSTANCE_IPS }}
-#          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-
-
-# ------------------------------------------------------------
 # Original code:
 
 #name: Polybot Microservice Deployment
