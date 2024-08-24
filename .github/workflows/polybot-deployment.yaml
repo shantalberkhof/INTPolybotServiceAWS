@@ -61,7 +61,6 @@ jobs:
         POLYBOT_INSTANCES=$(aws elbv2 describe-target-health --target-group-arn ${{ secrets.POLYBOT_TARGET_GROUP_ARN }} --query 'TargetHealthDescriptions[*].Target.Id' --output text --region ${{ secrets.AWS_REGION }})
         echo "POLYBOT_INSTANCES: $POLYBOT_INSTANCES"
         
-        CurKey=private_key2.pem
         for instance in $POLYBOT_INSTANCES; do
           INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $instance --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }})
         
@@ -84,9 +83,11 @@ jobs:
           fi
         
           CurKey=private_key1.pem
-          if [ "$EC2_PUBLIC_IP_POLYBOT2" ] == [ "$PUBLIC_IP" ]; then
+        
+          if [ "$PUBLIC_IP" == "3.138.153.210" ]; then
             CurKey=private_key2.pem
           fi
+        
           echo "Instance ID: $instance, Public IP: $PUBLIC_IP, CurKey: $CurKey"              
           
           # Retry SSH connection up to 5 times with a delay
