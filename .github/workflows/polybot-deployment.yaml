@@ -96,10 +96,9 @@ jobs:
               echo "SSH connection successful to $PUBLIC_IP"
 #              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
 #              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
-
 #              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker ps -aq -f name=my_polybot"
-              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP 'sudo docker stop my_polybot'
-              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP 'sudo docker rm my_polybot'
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
 
 #              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "
 #                set +e
@@ -115,8 +114,8 @@ jobs:
 #                ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
 #              fi
         
-              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP 'sudo docker pull $IMAGE_NAME'
-              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP 'sudo docker run --name my_polybot -p 8443:8443 $IMAGE_NAME'
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker pull $IMAGE_NAME"
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker run --name my_polybot -p 8443:8443 $IMAGE_NAME"
               break
             else
               echo "SSH connection to $PUBLIC_IP failed. Retrying in 10 seconds..."
