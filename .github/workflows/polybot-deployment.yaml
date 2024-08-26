@@ -9,8 +9,8 @@ on:
 
 
 env:
-  EC2_PUBLIC_IP_POLYBOT1: 3.15.7.48 #needs to be changed in the if condition [ "$PUBLIC_IP" ==
-  EC2_PUBLIC_IP_POLYBOT2: 3.20.204.2
+  EC2_PUBLIC_IP_POLYBOT1: 18.118.27.250
+  EC2_PUBLIC_IP_POLYBOT2: 3.143.221.225 #needs to be changed in the if condition [ "$PUBLIC_IP" ==
 
 jobs:
   BuildPolybot:
@@ -83,16 +83,17 @@ jobs:
          
           CurKey=private_key1.pem
         
-          if [ "$PUBLIC_IP" == "3.15.7.48" ]; then
+          if [ "$PUBLIC_IP" == "3.143.221.225" ]; then
             CurKey=private_key2.pem
           fi
         
           echo "Instance ID: $instance, Public IP: $PUBLIC_IP, CurKey: $CurKey"              
           
-# Retry SSH connection up to 5 times with a delay
+          # Retry SSH connection up to 5 times with a delay
           for attempt in {1..5}; do
             echo "Attempt $attempt to connect to $PUBLIC_IP"
             if ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "echo 'SSH connection successful'"; then
+        
               echo "SSH connection successful to $PUBLIC_IP"
 
               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
