@@ -96,8 +96,8 @@ jobs:
         
               echo "SSH connection successful to $PUBLIC_IP"
 
-              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot"
-              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot"
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker stop my_polybot || true"
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot || true"
         
               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker pull $IMAGE_NAME"
               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker run -d --name my_polybot -p 8443:8443 $IMAGE_NAME"
