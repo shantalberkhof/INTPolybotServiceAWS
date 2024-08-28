@@ -51,7 +51,8 @@ jobs:
         ASG_NAME="shantal-asg-aws"
         
         # Retrieve the instance ID of the first instance in that specific ASG
-        INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances --query "AutoScalingInstances[?AutoScalingGroupName=='$ASG_NAME'].InstanceId | [0]" --output text)
+        # INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances --query "AutoScalingInstances[?AutoScalingGroupName=='$ASG_NAME'].InstanceId | [0]" --output text)
+        INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances --query "AutoScalingInstances[0].InstanceId" --output text)
         echo "Selected Auto Scaling Group Name: $ASG_NAME"
         echo "Selected Instance ID: $INSTANCE_ID"
         
