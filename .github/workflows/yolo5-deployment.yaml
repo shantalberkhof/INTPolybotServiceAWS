@@ -48,12 +48,11 @@ jobs:
     - name: Get Instance ID from Specific Auto Scaling Group
       run: |
         # Specify the name of your desired Auto Scaling Group
-        ASG_NAME="shantal-asg-aws"
         
         # Retrieve the instance ID of the first instance in that specific ASG
         # INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances --query "AutoScalingInstances[?AutoScalingGroupName=='$ASG_NAME'].InstanceId | [0]" --output text)
-        INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances --query "AutoScalingInstances[0].InstanceId" --output text)
-        echo "Selected Auto Scaling Group Name: $ASG_NAME"
+        INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names shantal-asg-aws --query "AutoScalingGroups[0].Instances[0].InstanceId" --output text)
+        # INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances --query "AutoScalingInstances[0].InstanceId" --output text)
         echo "Selected Instance ID: $INSTANCE_ID"
         
         # Output the instance ID to the GitHub Actions environment
