@@ -23,7 +23,7 @@ s3_client = boto3.client('s3', region_name='us-east-2')
 dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
 table = dynamodb.Table('shantal-dynamoDB-aws') # Set the table name
 
-# A CHANGE 6
+# A CHANGE 7
 with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
 

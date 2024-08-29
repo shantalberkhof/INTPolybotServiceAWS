@@ -36,13 +36,13 @@ jobs:
         username: ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}
         password: ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
 
-    - name: Build and push Docker image
-      run: |
-        cd yolo5
-        YOLO5_IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5:v2
-        docker build -t $YOLO5_IMAGE_NAME .
-        # docker tag $YOLO5_IMAGE_NAME ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/$YOLO5_IMAGE_NAME
-        docker push $YOLO5_IMAGE_NAME
+#    - name: Build and push Docker image
+#      run: |
+#        cd yolo5
+#        YOLO5_IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5:v2
+#        docker build -t $YOLO5_IMAGE_NAME .
+#        # docker tag $YOLO5_IMAGE_NAME ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/$YOLO5_IMAGE_NAME
+#        docker push $YOLO5_IMAGE_NAME
 
     - name: Fetch YOLO5 EC2 Instance IDs
       # Fetch instance IDs based on the ASG name
