@@ -44,6 +44,7 @@ jobs:
 #        # docker tag $YOLO5_IMAGE_NAME ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/$YOLO5_IMAGE_NAME
 #        docker push $YOLO5_IMAGE_NAME
 
+
     - name: Fetch YOLO5 EC2 Instance IDs
       # Fetch instance IDs based on the ASG name
       run: |
