@@ -79,13 +79,13 @@ jobs:
         chmod 400 private_key1.pem  
         
         echo "Deploying to YOLO5 instances..."
-        for IP in ${{ env.EC2_PUBLIC_IP_YOLO5 }}; do
-          ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$IP << EOF
-          docker pull shantalberkhof/my_yolo5:v2
-          docker stop my_yolo5 || true
-          docker rm my_yolo5 || true
-          docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2
-          EOF
+        for IP in ${{ env.EC2_PUBLIC_IP_YOLO5 }}; do   
+          ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker stop my_yolo5 || true"
+          ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker rm my_yolo5 || true"
+    
+          ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker pull shantalberkhof/my_yolo5:v2"
+          ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2"
+        
         done
 
 #    - name: Deploy to AWS EC2
