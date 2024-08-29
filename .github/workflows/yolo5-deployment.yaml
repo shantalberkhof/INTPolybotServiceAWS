@@ -80,12 +80,12 @@ jobs:
         
         echo "Deploying to YOLO5 instances..."
         for IP in ${{ env.EC2_PUBLIC_IP_YOLO5 }}; do
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY1 }} ubuntu@$IP << EOF
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY1 }} ubuntu@$IP <<EOF
             docker pull shantalberkhof/my_yolo5:v2
             docker stop my_yolo5 || true
             docker rm my_yolo5 || true
             docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2
-        # EOF
+          EOF
         done
 
 #    - name: Deploy to AWS EC2
