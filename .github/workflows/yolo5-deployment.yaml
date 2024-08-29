@@ -12,7 +12,7 @@ env:
   TAG_VALUE: shantal-aws-yolo1
   BUCKET_NAME: shantal-awsproject
   SQS_QUEUE_NAME: shantal-queue-aws
-
+  EC2_PUBLIC_IP_YOLO5: 3.138.125.219
 
 jobs:
   build-deploy:
@@ -44,53 +44,92 @@ jobs:
         # docker tag $YOLO5_IMAGE_NAME ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/$YOLO5_IMAGE_NAME
         docker push $YOLO5_IMAGE_NAME
 
-
-    - name: Get Instance ID from Specific Auto Scaling Group
+    - name: Fetch YOLO5 EC2 Instance IDs
+      # Fetch instance IDs based on the ASG name
       run: |
-        # Specify the name of your desired Auto Scaling Group
-        
-        # Retrieve the instance ID of the first instance in that specific ASG
-        # INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances --query "AutoScalingInstances[?AutoScalingGroupName=='$ASG_NAME'].InstanceId | [0]" --output text)
-        # INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names "shantal-asg-aws" --query "AutoScalingGroups[0].Instances[0].InstanceId" --output text)
-        INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names "shantal-asg-aws" --query "AutoScalingInstances[0].InstanceId" --output text)
-        # INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances --query "AutoScalingInstances[0].InstanceId" --output text)
-        echo "Selected Instance ID: $INSTANCE_ID"
-        
-        # Output the instance ID to the GitHub Actions environment
-        echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
-      shell: bash
+        INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+          --auto-scaling-group-names "shantal-asg-aws" \
+          --query "AutoScalingGroups[0].Instances[*].InstanceId" \
+          --output text)
+        echo "INSTANCE_IDS=$INSTANCE_IDS" >> $GITHUB_ENV
+        echo "Instance IDs: $INSTANCE_IDS"
 
-    - name: Deploy to AWS EC2
+
+    - name: Fetch YOLO5 EC2 Public IPs
+      # Fetch public IPs for YOLO5 instances
       run: |
-        EC2_PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
-        echo "Selected Instance IP: EC2_PUBLIC_IP"
-        YOLO5_IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5:v2
-        echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key.pem
-        chmod 400 private_key.pem
-        # Retry SSH connection up to 5 times with a delay
-        for attempt in {1..5}; do
-          echo "Attempt $attempt to connect to $EC2_PUBLIC_IP "
-
-          if ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_PUBLIC_IP "echo 'SSH connection successful'"; then
-            echo "SSH connection successful to $EC2_PUBLIC_IP"
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_PUBLIC_IP "sudo docker stop my_yolo5 || true"
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_PUBLIC_IP "sudo docker rm my_yolo5 || true"
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_PUBLIC_IP "sudo docker rmi ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5  || true"
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_PUBLIC_IP "sudo docker system prune --force || true"
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_PUBLIC_IP "sudo docker pull $YOLO5_IMAGE_NAME"
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_PUBLIC_IP "sudo docker run -d --name my_yolo5 ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/$YOLO5_IMAGE_NAME"
-            break
-          else
-            echo "SSH connection to ubuntu@$EC2_PUBLIC_IP failed. Retrying in 10 seconds..."
-            sleep 10
-          fi
+        echo "Fetching public IPs for YOLO5 instances..."
+        EC2_PUBLIC_IP_YOLO5=""
+        for id in ${{ env.INSTANCE_IDS }}; do
+          PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $id \
+            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --output text)
+          EC2_PUBLIC_IP_YOLO5+="$PUBLIC_IP "
         done
-      env:
-        AWS_REGION: ${{ secrets.AWS_REGION }}
+    
+        echo "EC2_PUBLIC_IP_YOLO5=$EC2_PUBLIC_IP_YOLO5" >> $GITHUB_ENV
+        echo "Public IPs: $EC2_PUBLIC_IP_YOLO5"
+   
 
+    - name: Deploy to YOLO5 EC2 Instances
+      # Deploy to YOLO5 EC2 Instances
+      run: |
+        echo "Deploying to YOLO5 instances..."
+        for IP in ${{ env.EC2_PUBLIC_IP_YOLO5 }}; do
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY1 }} ubuntu@$IP << EOF
+            docker pull shantalberkhof/my_yolo5:v2
+            docker stop my_yolo5 || true
+            docker rm my_yolo5 || true
+            docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2
+          EOF
+        done
+
+#    - name: Deploy to AWS EC2
+#      run: |
+#        YOLO5_PUBLIC_IP=$EC2_PUBLIC_IP_YOLO5
+#        YOLO5_PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $YOLO5_PUBLIC_IP --query "Reservations[0].Instances[0].PublicIpAddress" --output text)
+#        echo "Selected Instance IP: $YOLO5_PUBLIC_IP"
+#        YOLO5_IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5:v2
+#        echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key.pem
+#        chmod 400 private_key.pem
+#        # Retry SSH connection up to 5 times with a delay
+#        for attempt in {1..5}; do
+#          echo "Attempt $attempt to connect to YOLO5_PUBLIC_IP "
 #
+#          if ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@YOLO5_PUBLIC_IP "echo 'SSH connection successful'"; then
+#            echo "SSH connection successful to YOLO5_PUBLIC_IP"
+#            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@YOLO5_PUBLIC_IP "sudo docker stop my_yolo5 || true"
+#            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@YOLO5_PUBLIC_IP "sudo docker rm my_yolo5 || true"
+#            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@YOLO5_PUBLIC_IP "sudo docker rmi ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5  || true"
+#            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@YOLO5_PUBLIC_IP "sudo docker system prune --force || true"
+#            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@YOLO5_PUBLIC_IP "sudo docker pull $YOLO5_IMAGE_NAME"
+#            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@YOLO5_PUBLIC_IP "sudo docker run -d --name my_yolo5 ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/$YOLO5_IMAGE_NAME"
+#            break
+#          else
+#            echo "SSH connection to ubuntu@EC2_PUBLIC_IP_YOLO5 failed. Retrying in 10 seconds..."
+#            sleep 10
+#          fi
+#        done
+#      env:
+#        AWS_REGION: ${{ secrets.AWS_REGION }}
+
+
+#    - name: Get Instance ID from Specific Auto Scaling Group
+#      run: |
+#        # Specify the name of your desired Auto Scaling Group
 #
+#        # Retrieve the instance ID of the first instance in that specific ASG
+#        # INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances --query "AutoScalingInstances[?AutoScalingGroupName=='$ASG_NAME'].InstanceId | [0]" --output text)
+#        # INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names "shantal-asg-aws" --query "AutoScalingGroups[0].Instances[0].InstanceId" --output text)
+#        INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names "shantal-asg-aws" --query "AutoScalingInstances[0].InstanceId" --output text)
+#        # INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances --query "AutoScalingInstances[0].InstanceId" --output text)
+#        echo "Selected Instance ID: $INSTANCE_ID"
 #
+#        # Output the instance ID to the GitHub Actions environment
+#        echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+#      shell: bash
+
+
 #      - name: Deploy to YOLO5 EC2 Instances
 #        run: |
 #          echo "Deploying to YOLO5 instances..."
@@ -103,7 +142,6 @@ jobs:
 #            EOF
 #          done
 #
-#          # ????
 #          # Take the service down
 #          docker compose down
 #
@@ -135,4 +173,4 @@ jobs:
 #
 #          echo "EC2_PUBLIC_IP_YOLO5=$EC2_PUBLIC_IP_YOLO5" >> $GITHUB_ENV
 #          echo "Public IPs: $EC2_PUBLIC_IP_YOLO5"
-#
+
