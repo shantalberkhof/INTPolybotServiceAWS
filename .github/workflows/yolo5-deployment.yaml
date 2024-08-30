@@ -69,10 +69,10 @@ jobs:
         chmod 400 private_key1.pem  
 
         echo "Deploying the original YOLO5 instance..."
-        ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@${{ env.ORIGINAL_EC2_PUBLIC_IP }} "sudo docker stop my_yolo5 || true"
-        ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@${{ env.ORIGINAL_EC2_PUBLIC_IP }} "sudo docker rm my_yolo5 || true"
-        ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@${{ env.ORIGINAL_EC2_PUBLIC_IP }} "sudo docker pull shantalberkhof/my_yolo5:v2"
-        ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@${{ env.ORIGINAL_EC2_PUBLIC_IP }} "sudo docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2"
+        ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@${{ env.EC2_PUBLIC_IP_YOLO5 }} "sudo docker stop my_yolo5 || true"
+        ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@${{ env.EC2_PUBLIC_IP_YOLO5 }} "sudo docker rm my_yolo5 || true"
+        ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@${{ env.EC2_PUBLIC_IP_YOLO5 }} "sudo docker pull shantalberkhof/my_yolo5:v2"
+        ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@${{ env.EC2_PUBLIC_IP_YOLO5 }} "sudo docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2"
 
         echo "Deploying all YOLO5 instances from ASG..."
         for IP in ${{ env.EC2_PUBLIC_IP_YOLO5 }}; do   
