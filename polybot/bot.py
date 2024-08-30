@@ -91,20 +91,20 @@ class Bot:
 
 
 class ObjectDetectionBot(Bot):
-    # added:
-
     def __init__(self, token, url, publickey):
         super().__init__(token, url, publickey)
         self.s3_client = boto3.client('s3', region_name='us-east-2')
         self.sqs_client = boto3.client('sqs', region_name='us-east-2')
-        # self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)  # Adjust max_workers based on your EC2 instance size
+        self.in_hdl_mes = 0
 
     def handle_message(self, msg):
         logger.info(f'------------ > Incoming message from telegram: {msg}')
-
-        if self.is_current_msg_photo(msg):
-            logger.info(f'------------ > THE MESSAGE IS IMAGE <------------')
-            self.process_image(msg)  # Goes to function process_image
+        if self.in_hdl_mes == 0:
+            self.in_hdl_mes = 1
+            if self.is_current_msg_photo(msg):
+                logger.info(f'------------ > THE MESSAGE IS IMAGE <------------')
+                self.process_image(msg)  # Goes to function process_image
+            self.in_hdl_mes = 0
 
     def process_image(self, msg):
 
