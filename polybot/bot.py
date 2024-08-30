@@ -108,10 +108,10 @@ class ObjectDetectionBot(Bot):
 
     def process_image(self, msg):
 
-        count = 1  # Specify how many times to send the same image
+        count = 1
         if msg.get('caption', '').lower() == "test":
             logger.info(f'Caption is test.')
-            count = 15 # Specify how many times to send the same image
+            count = 15 # Specify how many times to send the same image <---------------------
             logger.info(f'Received "test" command. Sending {count} photos.')
 
         self.send_multiple_photos(msg, count)

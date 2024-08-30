@@ -11,6 +11,7 @@ env:
   EC2_PUBLIC_IP_POLYBOT1: 3.138.119.11 #needs to be changed in the if condition [ "$PUBLIC_IP" ==
   EC2_PUBLIC_IP_POLYBOT2: 3.131.153.235 #needs to be changed in the if condition [ "$PUBLIC_IP" ==
 
+
 jobs:
   BuildPolybot:
     runs-on: ubuntu-latest

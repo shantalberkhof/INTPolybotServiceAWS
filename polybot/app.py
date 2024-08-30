@@ -81,6 +81,7 @@ def results():
 
 @app.route(f'/loadTest/', methods=['POST'])
 def load_test():
+    logger.info(f'Calling handle message function')
     req = request.get_json()
     bot.handle_message(req['message'])
     return 'Ok'
