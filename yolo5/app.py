@@ -171,8 +171,7 @@ def consume():
 
 
                         except requests.exceptions.RequestException as e:
-                            logger.info(f'INFO 2: An error occurred while fetching results: {e}')
-                            logger.error(f'An error occurred while fetching results: {e}')
+                            logger.info(f'An error occurred while fetching results: {e}')
 
                         # TODO Delete the message from the queue as the job is considered as DONE ---------------------------------------------------
                         sqs_client.delete_message(QueueUrl=queue_name, ReceiptHandle=receipt_handle)
