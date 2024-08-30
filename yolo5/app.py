@@ -27,7 +27,6 @@ table = dynamodb.Table('shantal-dynamoDB-aws') # Set the table name
 with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
 
-
 # The yolo5 takes the photo from the queue and saves the results to dynamoDB:
 # Acts as a consumer: consumes the jobs from the queue, downloads the image from S3, processes the image, and writes the results to a DynamoDB table
 def consume():
