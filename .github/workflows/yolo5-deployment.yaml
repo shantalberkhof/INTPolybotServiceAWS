@@ -14,7 +14,6 @@ env:
   SQS_QUEUE_NAME: shantal-queue-aws
   EC2_PUBLIC_IP_YOLO5: 18.188.13.117 #needs to be changed each time here
 
-
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
