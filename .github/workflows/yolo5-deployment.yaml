@@ -38,14 +38,30 @@ jobs:
         password: ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
 
     - name: Fetch YOLO5 EC2 Instance IDs
-      # Fetch instance IDs based on the ASG name
+      # Fetch instance IDs based on the ASG name and include the original EC2 instance
       run: |
-        INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+        ORIGINAL_INSTANCE_ID=$(aws ec2 describe-instances \
+          --filters "Name=ip-address,Values=${{ env.EC2_PUBLIC_IP_YOLO5 }}" \
+          --query "Reservations[0].Instances[0].InstanceId" \
+          --output text)
+
+        ASG_INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
           --auto-scaling-group-names "shantal-asg-aws" \
           --query "AutoScalingGroups[0].Instances[*].InstanceId" \
           --output text)
+
+        INSTANCE_IDS="$ORIGINAL_INSTANCE_ID $ASG_INSTANCE_IDS"
         echo "INSTANCE_IDS=$INSTANCE_IDS" >> $GITHUB_ENV
-        echo "Instance IDs: $INSTANCE_IDS"
+        echo "Combined Instance IDs: $INSTANCE_IDS"
+
+      # Fetch instance IDs based on the ASG name
+#      run: |
+#        INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+#          --auto-scaling-group-names "shantal-asg-aws" \
+#          --query "AutoScalingGroups[0].Instances[*].InstanceId" \
+#          --output text)
+#        echo "INSTANCE_IDS=$INSTANCE_IDS" >> $GITHUB_ENV
+#        echo "Instance IDs: $INSTANCE_IDS"
 
 
     - name: Fetch YOLO5 EC2 Public IPs
@@ -70,7 +86,7 @@ jobs:
         chmod 400 private_key1.pem  
 
         echo "Deploying all YOLO5 instances ..."
-        for instance in $ALL_EC2_PUBLIC_IPS_YOLO5; do   
+        for instance in $INSTANCE_IDS; do   
         
           INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $instance --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }}) 
           if [ "$INSTANCE_STATE" != "running" ]; then
