@@ -12,7 +12,7 @@ env:
   TAG_VALUE: shantal-aws-yolo1
   BUCKET_NAME: shantal-awsproject
   SQS_QUEUE_NAME: shantal-queue-aws
-  EC2_PUBLIC_IP_YOLO5: 3.133.149.183 #needs to be changed each time here
+  EC2_PUBLIC_IP_YOLO5: 18.188.13.117 #needs to be changed each time here
 
 
 jobs:
@@ -59,7 +59,7 @@ jobs:
             --output text)
           ALL_EC2_PUBLIC_IPS_YOLO5+="$PUBLIC_IP "
         done
-        echo "ALL_EC2_PUBLIC_IPS_YOLO5=ALL_EC2_PUBLIC_IPS_YOLO5" >> $GITHUB_ENV
+        echo "ALL_EC2_PUBLIC_IPS_YOLO5=$ALL_EC2_PUBLIC_IPS_YOLO5" >> $GITHUB_ENV 
         echo "All Public IPs: ALL_EC2_PUBLIC_IPS_YOLO5"
    
 
@@ -70,7 +70,7 @@ jobs:
         chmod 400 private_key1.pem  
 
         echo "Deploying all YOLO5 instances ..."
-        for instance in $ALL_EC2_PUBLIC_IPS_YOLO; do   
+        for instance in $ALL_EC2_PUBLIC_IPS_YOLO5; do   
         
           INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $instance --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }}) 
           if [ "$INSTANCE_STATE" != "running" ]; then
@@ -89,15 +89,16 @@ jobs:
           # Retry SSH connection up to 5 times with a delay
           for attempt in {1..5}; do
             echo "Attempt $attempt to connect to $PUBLIC_IP"
-            if ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "echo 'SSH connection successful'"; then
+            if ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$instance "echo 'SSH connection successful'"; then
         
               ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "sudo docker stop my_yolo5 || true"
               ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "sudo docker rm my_yolo5 || true"
         
               ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "sudo docker pull shantalberkhof/my_yolo5:v2"
               ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "sudo docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2"
+              break
             else
-              echo "SSH connection to $PUBLIC_IP failed. Retrying in 10 seconds..."
+              echo "SSH connection to $instance failed. Retrying in 10 seconds..."
               sleep 10
             fi
           done
