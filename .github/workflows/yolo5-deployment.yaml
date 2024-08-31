@@ -70,7 +70,7 @@ jobs:
         chmod 400 private_key1.pem  
 
         echo "Deploying all YOLO5 instances ..."
-        for instance in $ALL_EC2_PUBLIC_IPS_YOLO5; do   
+        for instance in $INSTANCE_IDS; do   
         
           INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $instance --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }}) 
           if [ "$INSTANCE_STATE" != "running" ]; then
