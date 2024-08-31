@@ -98,14 +98,14 @@ jobs:
             continue
           fi
             
-          INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $PUBLIC_IP --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }}) \
+          INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $id --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }})
 
           if [ "$INSTANCE_STATE" != "running" ]; then
-            echo "Instance $PUBLIC_IP is $INSTANCE_STATE. Starting the instance..."
-            aws ec2 start-instances --instance-ids $PUBLIC_IP --region ${{ secrets.AWS_REGION }}
+            echo "Instance $id is $INSTANCE_STATE. Starting the instance..."
+            aws ec2 start-instances --instance-ids $id --region ${{ secrets.AWS_REGION }}
         
-            echo "Waiting for instance $PUBLIC_IP to be in running state..."
-            aws ec2 wait instance-running --instance-ids $PUBLIC_IP --region ${{ secrets.AWS_REGION }}
+            echo "Waiting for instance $id to be in running state..."
+            aws ec2 wait instance-running --instance-ids $id --region ${{ secrets.AWS_REGION }}
           fi
                     
           # Retry SSH connection up to 5 times with a delay
