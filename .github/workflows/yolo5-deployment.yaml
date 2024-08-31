@@ -60,7 +60,7 @@ jobs:
           ALL_EC2_PUBLIC_IPS_YOLO5+="$PUBLIC_IP "
         done
         echo "ALL_EC2_PUBLIC_IPS_YOLO5=$ALL_EC2_PUBLIC_IPS_YOLO5" >> $GITHUB_ENV 
-        echo "All Public IPs: ALL_EC2_PUBLIC_IPS_YOLO5"
+        echo "All Public IPs: $ALL_EC2_PUBLIC_IPS_YOLO5"
    
 
     - name: Deploy to YOLO5 EC2 Instances
@@ -70,7 +70,7 @@ jobs:
         chmod 400 private_key1.pem  
 
         echo "Deploying all YOLO5 instances ..."
-        for instance in $INSTANCE_IDS; do   
+        for instance in $ALL_EC2_PUBLIC_IPS_YOLO5; do   
         
           INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $instance --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }}) 
           if [ "$INSTANCE_STATE" != "running" ]; then
@@ -88,8 +88,9 @@ jobs:
         
           # Retry SSH connection up to 5 times with a delay
           for attempt in {1..5}; do
-            echo "Attempt $attempt to connect to $PUBLIC_IP"
-            if ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$instance "echo 'SSH connection successful'"; then
+          # echo "Attempt $attempt to connect to $PUBLIC_IP"
+            echo "Attempt $attempt to connect to $instance"
+            if ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "echo 'SSH connection successful'"; then
         
               ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "sudo docker stop my_yolo5 || true"
               ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "sudo docker rm my_yolo5 || true"
