@@ -37,6 +37,15 @@ jobs:
         username: ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}
         password: ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
 
+
+    - name: Build and push Polybot image to DockerHub
+      run: |
+        cd polybot
+        docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
+        IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5:v2
+        docker build -t $IMAGE_NAME .
+        docker push $IMAGE_NAME      
+
     - name: Fetch YOLO5 EC2 Instance IDs
       # Fetch instance IDs based on the ASG name and include the original EC2 instance
       run: |
@@ -53,16 +62,6 @@ jobs:
         INSTANCE_IDS="$ORIGINAL_INSTANCE_ID $ASG_INSTANCE_IDS"
         echo "INSTANCE_IDS=$INSTANCE_IDS" >> $GITHUB_ENV
         echo "Combined Instance IDs: $INSTANCE_IDS"
-
-      # Fetch instance IDs based on the ASG name
-#      run: |
-#        INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
-#          --auto-scaling-group-names "shantal-asg-aws" \
-#          --query "AutoScalingGroups[0].Instances[*].InstanceId" \
-#          --output text)
-#        echo "INSTANCE_IDS=$INSTANCE_IDS" >> $GITHUB_ENV
-#        echo "Instance IDs: $INSTANCE_IDS"
-
 
     - name: Fetch YOLO5 EC2 Public IPs
       # Fetch public IPs for YOLO5 instances + original
