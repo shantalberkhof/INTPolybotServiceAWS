@@ -40,7 +40,7 @@ jobs:
 
     - name: Build and push Polybot image to DockerHub
       run: |
-        cd polybot
+        cd yolo5
         docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
         IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5:v2
         docker build -t $IMAGE_NAME .
