@@ -86,36 +86,39 @@ jobs:
         chmod 400 private_key1.pem  
 
         echo "Deploying all YOLO5 instances ..."
-        for instance in $INSTANCE_IDS; do   
+        for id in $INSTANCE_IDS; do   
         
-          INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $instance --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }}) 
-          if [ "$INSTANCE_STATE" != "running" ]; then
-            echo "Instance $instance is $INSTANCE_STATE. Starting the instance..."
-            aws ec2 start-instances --instance-ids $instance --region ${{ secrets.AWS_REGION }}
-        
-            echo "Waiting for instance $instance to be in running state..."
-            aws ec2 wait instance-running --instance-ids $instance --region ${{ secrets.AWS_REGION }}
-          fi
-             
-          if [ "instance" == "null" ] || [ -z "instance" ]; then
-            echo "No public IP found for instance $instance"
+          PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $id \
+            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --output text)
+          
+          if [ "$PUBLIC_IP" == "null" ] || [ -z "$PUBLIC_IP" ]; then
+            echo "No public IP found for instance $id"
             continue
           fi
+            
+          INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $id--query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }}) 
+          if [ "$INSTANCE_STATE" != "running" ]; then
+            echo "Instance $id is $INSTANCE_STATE. Starting the instance..."
+            aws ec2 start-instances --instance-ids $id --region ${{ secrets.AWS_REGION }}
         
+            echo "Waiting for instance $id to be in running state..."
+            aws ec2 wait instance-running --instance-ids $id --region ${{ secrets.AWS_REGION }}
+          fi
+                    
           # Retry SSH connection up to 5 times with a delay
           for attempt in {1..5}; do
-          # echo "Attempt $attempt to connect to $PUBLIC_IP"
-            echo "Attempt $attempt to connect to $instance"
-            if ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "echo 'SSH connection successful'"; then
+            echo "Attempt $attempt to connect to $PUBLIC_IP"
+            if ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "echo 'SSH connection successful'"; then
         
-              ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "sudo docker stop my_yolo5 || true"
-              ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "sudo docker rm my_yolo5 || true"
+              ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker stop my_yolo5 || true"
+              ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker rm my_yolo5 || true"
         
-              ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "sudo docker pull shantalberkhof/my_yolo5:v2"
-              ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$instance "sudo docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2"
+              ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker pull shantalberkhof/my_yolo5:v2"
+              ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2"
               break
             else
-              echo "SSH connection to $instance failed. Retrying in 10 seconds..."
+              echo "SSH connection to $id failed. Retrying in 10 seconds..."
               sleep 10
             fi
           done
