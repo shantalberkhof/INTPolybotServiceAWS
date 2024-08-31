@@ -91,13 +91,15 @@ jobs:
           PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $id \
             --query "Reservations[*].Instances[*].PublicIpAddress" \
             --output text)
-          
+
+          echo "Current instance IP: $PUBLIC_IP"
           if [ "$PUBLIC_IP" == "null" ] || [ -z "$PUBLIC_IP" ]; then
             echo "No public IP found for instance $id"
             continue
           fi
             
-          INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $id--query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }}) 
+          INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $PUBLIC_IP --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }}) \
+
           if [ "$INSTANCE_STATE" != "running" ]; then
             echo "Instance $id is $INSTANCE_STATE. Starting the instance..."
             aws ec2 start-instances --instance-ids $id --region ${{ secrets.AWS_REGION }}
