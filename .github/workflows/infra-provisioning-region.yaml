@@ -10,8 +10,6 @@ on:
     secrets:
       TELEGRAM_TOKEN:
         required: true
-      TELEGRAM_TOKEN2:
-        required: true
       AWS_ACCESS_KEY_ID:
         required: true
       AWS_SECRET_ACCESS_KEY:
