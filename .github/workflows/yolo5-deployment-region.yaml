@@ -1,0 +1,175 @@
+# Commit and push this and: region-us-east-1.tfvars OR region-eu-central-1.tfvars
+# Export YOLO5_IMAGE=shantalberkhof/my_yolo5:v2 # was :latest
+
+name: Yolo5 Microservice Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      us-east-1:
+        description: 'Deploy to N.Virginia (us-east-1)'
+        required: false
+        type: boolean
+      eu-north-1:
+        description: 'Deploy to Stockholm (eu-north-1)'
+        required: false
+        type: boolean
+
+jobs:
+  deploy-us-east-1:
+    if: ${{ github.event.inputs.us-east-1 == 'true' }}
+    name: Deploy to us-east-1 (N. Virginia)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repo code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.US_EAST_1_PRIVATE_KEY}}
+
+      - name: Build and push Yolo image to DockerHub
+        run: |
+          cd yolo5
+          docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
+          IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5:v2
+          docker build -t $IMAGE_NAME .
+          docker push $IMAGE_NAME 
+
+      - name: Get Yolo5 EC2's IP in us-east-1
+        run: |
+
+          INSTANCES_IDS=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-yolo5-ec2" \
+            --query 'Reservations[*].Instances[*].InstanceId' --output text)
+
+          for instance_id in $INSTANCES_IDS;
+          do
+            state=$(aws ec2 describe-instances --instance-ids $instance_id --query 'Reservations[*].Instances[*].State.Name' --output text)
+
+            if [ "$state" = "terminated" ]; then
+              echo "Instance terminated, skipping."
+            elif [ "$state" = "stopped" ]; then
+              echo "Starting instance $instance_id..."
+              aws ec2 start-instances --instance-ids $instance_id
+              aws ec2 wait instance-running --instance-ids $instance_id
+            else
+              echo "Instance $instance_id already running."
+            fi
+          done
+
+          YOLO5_SERVERS_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-yolo5-ec2" \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' --output text | grep -v None)
+
+          echo "YOLO5_SERVERS_IP<<EOF" >> "$GITHUB_ENV"
+          echo "$YOLO5_SERVERS_IP" >> "$GITHUB_ENV"
+          echo EOF >> "$GITHUB_ENV"
+
+      - name: Deploy YOLOv5 to EC2 in us-east-1
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+          PRIVATE_KEY: ${{ secrets.US_EAST_1_PRIVATE_KEY }}
+        run: |
+          cd tf
+          OWNER=$(grep owner region.us-east-1.tfvars | grep -o '".*"' | sed 's/"//g')
+          cd ..
+
+          echo "BUCKET_NAME=tf-$OWNER-images-bucket-us-east-1
+          SQS_QUEUE_NAME=tf-$OWNER-project-queue
+          REGION_NAME=us-east-1
+          DYNAMODB_TABLE=tf-$OWNER-predictions-dynamodb-table
+          ALB_URL=$OWNER-polybot-us-east-1.int-devops.click:8443" > .env
+
+          YOLO5_SERVERS_IP=${YOLO5_SERVERS_IP#*:}
+
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+
+          for SERVER_IP in $YOLO5_SERVERS_IP; do
+            scp -o StrictHostKeyChecking=no -i private_key .env ubuntu@$SERVER_IP:/home/ubuntu/
+            ssh -o StrictHostKeyChecking=no -i private_key ubuntu@$SERVER_IP <<EOF
+              YOLO5_IMAGE=shantalberkhof/my_yolo5:v2 # was latest
+              docker stop yolo5 || true && docker rm yolo5 || true
+              docker run -d --restart always --env-file /home/ubuntu/.env --name yolo5 \$YOLO5_IMAGE
+              docker ps | grep yolo5 || exit 1
+# EOF
+          done
+
+  deploy-eu-north-1:
+    if: ${{ github.event.inputs.eu-central-1 == 'true' }}
+    name: Deploy to eu-north-1 (Stockholm)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repo code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.EU_CENTRAL_1_PRIVATE_KEY }}
+
+      - name: Get Yolo5 EC2's IP in eu-north-1
+        env:
+          AWS_DEFAULT_REGION: eu-north-1
+        run: |
+          export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+          INSTANCES_IDS=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-yolo5-ec2" \
+            --query 'Reservations[*].Instances[*].InstanceId' --output text)
+
+          for instance_id in $INSTANCES_IDS;
+          do
+            state=$(aws ec2 describe-instances --instance-ids $instance_id --query 'Reservations[*].Instances[*].State.Name' --output text)
+
+            if [ "$state" = "terminated" ]; then
+              echo "Instance terminated, skipping."
+            elif [ "$state" = "stopped" ]; then
+              echo "Starting instance $instance_id..."
+              aws ec2 start-instances --instance-ids $instance_id
+              aws ec2 wait instance-running --instance-ids $instance_id
+            else
+              echo "Instance $instance_id already running."
+            fi
+          done
+
+          YOLO5_SERVERS_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-yolo5-ec2" \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' --output text | grep -v None)
+
+          echo "YOLO5_SERVERS_IP<<EOF" >> "$GITHUB_ENV"
+          echo "$YOLO5_SERVERS_IP" >> "$GITHUB_ENV"
+          echo EOF >> "$GITHUB_ENV"
+
+      - name: Deploy YOLOv5 to EC2 in eu-north-1
+        env:
+          AWS_DEFAULT_REGION: eu-north-1
+          PRIVATE_KEY: ${{ secrets.EU_NORTH_1_PRIVATE_KEY }}
+        run: |
+          cd tf
+          OWNER=$(grep owner region.eu-north-1.tfvars | grep -o '".*"' | sed 's/"//g')
+          cd ..
+
+          echo "BUCKET_NAME=tf-$OWNER-images-bucket-eu-north-1
+          SQS_QUEUE_NAME=tf-$OWNER-project-queue
+          REGION_NAME=eu-north-1
+          DYNAMODB_TABLE=tf-$OWNER-predictions-dynamodb-table
+          ALB_URL=$OWNER-polybot-eu-north-1.int-devops.click:8443" > .env
+
+          YOLO5_SERVERS_IP=${YOLO5_SERVERS_IP#*:}
+
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+
+          for SERVER_IP in $YOLO5_SERVERS_IP; do
+            scp -o StrictHostKeyChecking=no -i private_key .env ubuntu@$SERVER_IP:/home/ubuntu/
+            ssh -o StrictHostKeyChecking=no -i private_key ubuntu@$SERVER_IP <<EOF
+              YOLO5_IMAGE=shantalberkhof/my_yolo5:v2 # was latest
+              docker stop yolo5 || true && docker rm yolo5 || true
+              docker run -d --restart always --env-file /home/ubuntu/.env --name yolo5 \$YOLO5_IMAGE
+              docker ps | grep yolo5 || exit 1
+# EOF
+          done
