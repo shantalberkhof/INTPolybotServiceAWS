@@ -97,7 +97,7 @@ jobs:
 # EOF
           done
 
-  deploy-eu-north-1:
+  deploy-eu-central-1:
     if: ${{ github.event.inputs.eu-central-1 == 'true' }}
     name: Deploy to eu-north-1 (Stockholm)
     runs-on: ubuntu-latest
@@ -115,7 +115,7 @@ jobs:
 
       - name: Get Yolo5 EC2's IP in eu-north-1
         env:
-          AWS_DEFAULT_REGION: eu-north-1
+          AWS_DEFAULT_REGION: eu-central-1
         run: |
           export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
           export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -145,20 +145,20 @@ jobs:
           echo "$YOLO5_SERVERS_IP" >> "$GITHUB_ENV"
           echo EOF >> "$GITHUB_ENV"
 
-      - name: Deploy YOLOv5 to EC2 in eu-north-1
+      - name: Deploy YOLOv5 to EC2 in eu-central-1
         env:
-          AWS_DEFAULT_REGION: eu-north-1
+          AWS_DEFAULT_REGION: eu-central-1
           PRIVATE_KEY: ${{ secrets.EU_NORTH_1_PRIVATE_KEY }}
         run: |
           cd tf
-          OWNER=$(grep owner region.eu-north-1.tfvars | grep -o '".*"' | sed 's/"//g')
+          OWNER=$(grep owner region.eu-central-1.tfvars | grep -o '".*"' | sed 's/"//g')
           cd ..
 
-          echo "BUCKET_NAME=tf-$OWNER-images-bucket-eu-north-1
+          echo "BUCKET_NAME=tf-$OWNER-images-bucket-eu-central-1
           SQS_QUEUE_NAME=tf-$OWNER-project-queue
-          REGION_NAME=eu-north-1
+          REGION_NAME=eu-central-1
           DYNAMODB_TABLE=tf-$OWNER-predictions-dynamodb-table
-          ALB_URL=$OWNER-polybot-eu-north-1.int-devops.click:8443" > .env
+          ALB_URL=$OWNER-polybot-eu-central-1.int-devops.click:8443" > .env
 
           YOLO5_SERVERS_IP=${YOLO5_SERVERS_IP#*:}
 

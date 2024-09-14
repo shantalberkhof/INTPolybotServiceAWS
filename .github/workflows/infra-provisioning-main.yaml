@@ -1,6 +1,6 @@
 # PART 1 - This is the main pipeline. It should be manually triggered from the GitHub Actions tab,
 # while selecting the regions to provision the infrastructure.
-name: Infrastructure Terraform Main (part 1)
+name: Infra Terraform Main (part 1)
 
 on:
   workflow_dispatch: # Trigger that allows to manually start the workflow from the GitHub Actions tab in the repository
@@ -10,7 +10,7 @@ on:
         description: 'N.Virginia (us-east-1)'
         required: false
         type: boolean
-      eu-north-1:
+      eu-central-1:
         description: 'Stockholm (eu-north-1)'
         required: false
         type: boolean
@@ -26,11 +26,11 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-  eu-north-1:
-    if: ${{ github.event.inputs.eu-north-1 == 'true' }}
+  eu-central-1:
+    if: ${{ github.event.inputs.eu-central-1 == 'true' }}
     uses: ./.github/workflows/infra-provisioning-region.yaml
     with:
-      region-code: eu-north-1
+      region-code: eu-central-1
     secrets:
       TELEGRAM_TOKEN: ${{ secrets.EU_NORTH_1_TELEGRAM_TOKEN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

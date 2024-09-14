@@ -73,9 +73,9 @@ jobs:
 # EOF
           done
 
-  deploy-eu-north-1:
-    if: ${{ github.event.inputs['eu-north-1'] == 'true' }}
-    name: Deploy to eu-north-1 (Stockholm)
+  deploy-eu-central-1:
+    if: ${{ github.event.inputs['eu-central-1'] == 'true' }}
+    name: Deploy to eu-central-1 (Stockholm)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo code

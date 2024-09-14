@@ -8,8 +8,8 @@ on:
         description: 'N.Virginia (us-east-1)'
         required: false
         type: boolean
-      eu-north-1:
-        description: 'Stockholm (eu-north-1)'
+      eu-central-1:
+        description: 'Stockholm (eu-central-1)'
         required: false
         type: boolean
 
@@ -23,7 +23,7 @@ jobs:
       matrix:
         region:
           - us-east-1
-          - eu-north-1
+          - eu-central-1
     steps:
       - name: Checkout code
         uses: actions/checkout@v2

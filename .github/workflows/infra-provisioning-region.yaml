@@ -1,5 +1,5 @@
 # PART 2 - automatically called by the main pipeline and provisions the infrastructure for a specific region.
-name: Infrastructure Terraform Specific Region (part 2)
+name: Infra Terraform Specific Region (part 2)
 
 on:
   workflow_call:
