@@ -44,13 +44,14 @@ jobs:
       - name: Terraform validate
         run: terraform validate
 
-      - name: Export token
-        run: |
-          export TF_VAR_botToken=${{ secrets.TELEGRAM_TOKEN }} #defined in the main CICD based on the region
+      - name: Export token to env
+        env:
+          TF_VAR_botToken: ${{ secrets.TELEGRAM_TOKEN }}  # Ensure bot token is available
 
       - name: Terraform plan
         run: |
           terraform plan -var-file=region.${{ inputs.region-code }}.tfvars # checks that the token can be used in Secrets Manager
+        timeout-minutes: 10
 
       - name: Terraform apply
         id: apply
