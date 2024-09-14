@@ -17,19 +17,11 @@ on:
         required: true
 
 jobs:
-  Deploy:
+  Terraform:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo code
         uses: actions/checkout@v2
-
-#      - name: Build and push Yolo image to DockerHub
-#        run: |
-#          cd yolo5
-#          docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }} --password-stdin
-#          IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5:v2
-#          docker build -t $IMAGE_NAME .
-#          docker push $IMAGE_NAME
 
       - name: Get Yolo5 EC2's IP
         env:
@@ -41,7 +33,7 @@ jobs:
        # Gets instances id from yolo5 ec2 by their tags
           INSTANCES_IDS=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-yolo5-ec2" \
             --query 'Reservations[*].Instances[*].InstanceId' --output text)
-
+  
           for instance_id in $INSTANCES_IDS;
           do
             state=$(aws ec2 describe-instances --instance-ids $instance_id --query 'Reservations[*].Instances[*].State.Name' --output text)
@@ -57,15 +49,15 @@ jobs:
               echo "Instance $instance_id already running."
             fi
           done
-
+  
           # Gets public ip from yolo5 ec2 by their tags (Gets only from running EC2s).
           YOLO5_SERVERS_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-yolo5-ec2" \
             --query 'Reservations[*].Instances[*].PublicIpAddress' --output text | grep -v None)
                
           echo "The IPs of running Yolo5 EC2's are- $YOLO5_SERVERS_IP"
-
-#          echo "YOLO5_SERVERS_IP<<EOF" >> "$GITHUB_ENV"
-#          echo "$YOLO5_SERVERS_IP" >> "$GITHUB_ENV"
+  
+  #          echo "YOLO5_SERVERS_IP<<EOF" >> "$GITHUB_ENV"
+  #          echo "$YOLO5_SERVERS_IP" >> "$GITHUB_ENV"
           echo "YOLO5_SERVERS_IP=$YOLO5_SERVERS_IP" >> "$GITHUB_ENV" # NEW CORRECTION
           #echo EOF >> "$GITHUB_ENV"
 

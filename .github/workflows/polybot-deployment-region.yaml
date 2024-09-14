@@ -17,19 +17,11 @@ on:
         required: true
 
 jobs:
-  Deploy:
+  Terraform:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo code
         uses: actions/checkout@v2
-
-#      - name: Build and push Polybot image to DockerHub
-#        run: |
-#          cd polybot
-#          echo ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} --password-stdin
-#          IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_polybot:v2
-#          docker build -t $IMAGE_NAME .
-#          docker push $IMAGE_NAME
 
       - name: Get Polybot EC2's IP
         env:
