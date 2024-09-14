@@ -1,8 +1,8 @@
-# Commit and push this and: region-us-east-1.tfvars OR region-eu-central-1.tfvars
+# Commit and push this and: region-us-east-1.tfvars OR region-eu-central-1.tfvars test1
 
 name: Yolo5 Infra Terraform Region (part 2)
 
-on:
+on: #comment 1
   workflow_call:
     inputs:
       region-code:
@@ -17,7 +17,7 @@ on:
         required: true
 
 jobs:
-  Terraform:
+  Deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo code
@@ -41,7 +41,7 @@ jobs:
               --output text)  
 
             echo "The instance - $instance_id is in state - $state"
-            
+
             if [ "$state" = "terminated" ]; 
             then
               echo "Instance terminated, cannot be started..."
@@ -54,17 +54,16 @@ jobs:
               echo "Instance $instance_id already running."
             fi
           done
-  
+
           # Gets public ip from yolo5 ec2 by their tags (Gets only from running EC2s).
           YOLO5_SERVERS_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-yolo5-ec2" \
             --query 'Reservations[*].Instances[*].PublicIpAddress' --output text | grep -v None)
-               
+
           echo "The IPs of running Yolo5 EC2's are- $YOLO5_SERVERS_IP"
-  
-  #          echo "YOLO5_SERVERS_IP<<EOF" >> "$GITHUB_ENV"
-  #          echo "$YOLO5_SERVERS_IP" >> "$GITHUB_ENV"
+
           echo "YOLO5_SERVERS_IP=$YOLO5_SERVERS_IP" >> "$GITHUB_ENV" # NEW CORRECTION
           #echo EOF >> "$GITHUB_ENV"
+
 
       - name: Deploy YOLOv5 to EC2 in specific region
         env:
@@ -74,7 +73,7 @@ jobs:
           cd tf
           # Gets from tfvars file the owner name
           OWNER=$(cat region.$AWS_DEFAULT_REGION.tfvars | grep owner |  grep -o '".*"' | sed 's/"//g')
-          
+
           cd ..
 
           # create .env file with needed values.
