@@ -1,0 +1,34 @@
+name: Polybot Infra Terraform Main (part 1)
+
+on:
+  workflow_dispatch: # to run manually from GitHub
+    inputs:
+      us-east-1:
+        description: 'N.Virginia (us-east-1)'
+        required: false
+        type: boolean
+      eu-central-1:
+        description: 'Stockholm (eu-central-1)'
+        required: false
+        type: boolean
+
+jobs:
+  us-east-1:
+    if: ${{ github.event.inputs.us-east-1 == 'true' }}
+    uses: ./.github/workflows/polybot-deployment-region.yaml
+    with:
+      region-code: us-east-1
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      PRIVATE_KEY: ${{ secrets.US_EAST_1_PRIVATE_KEY }}
+
+  eu-central-1:
+    if: ${{ github.event.inputs.eu-central-1 == 'true' }}
+    uses: ./.github/workflows/polybot-deployment-region.yaml
+    with:
+      region-code: eu-central-1
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      PRIVATE_KEY: ${{ secrets.EU_CENTRAL_1_PRIVATE_KEY }}

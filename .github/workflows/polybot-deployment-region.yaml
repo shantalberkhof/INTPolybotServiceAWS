@@ -1,34 +1,27 @@
 # Commit and push this and: region-us-east-1.tfvars OR region-eu-central-1.tfvars
 
-name: Infra Terraform Polybot
+name: Polybot Infra Terraform Region (part 2)
 
 on:
-  workflow_dispatch: # to run manually from GitHub
+  workflow_call:
     inputs:
-      us-east-1:
-        description: 'N.Virginia (us-east-1)'
-        required: false
-        type: boolean
-      eu-central-1:
-        description: 'Stockholm (eu-central-1)'
-        required: false
-        type: boolean
+      region-code:
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      PRIVATE_KEY:
+        required: true
 
 jobs:
-  deploy-us-east-1:
-    if: ${{ github.event.inputs['us-east-1'] == 'true' }}
-    name: Deploy to us-east-1 (N. Virginia)
+  Deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo code
         uses: actions/checkout@v2
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
 
       - name: Build and push Polybot image to DockerHub
         run: |
@@ -38,97 +31,114 @@ jobs:
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
 
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v2
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
       - name: Get Polybot EC2's IP
+        env:
+          AWS_DEFAULT_REGION: ${{ inputs.region-code }}
         run: |
           export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
           export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+               
+          # Gets instances id from polybot ec2 by their tags    
           INSTANCES_IDS=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-polybot-ec2" \
             --query 'Reservations[*].Instances[*].InstanceId' --output text)
           
           for instance_id in $INSTANCES_IDS; do
-            state=$(aws ec2 describe-instances --instance-ids $instance_id --query 'Reservations[*].Instances[*].State.Name' --output text)
-            if [ "$state" = "stopped" ]; then
+            #state=$(aws ec2 describe-instances --instance-ids $instance_id --query 'Reservations[*].Instances[*].State.Name' --output text)
+            state=$(aws ec2 describe-instances --filters "Name=instance-id,Values=$instance_id" \
+              --query 'Reservations[*].Instances[*].{State:State.Name}' \
+              --output text)  
+
+            echo "The instance - $instance_id is in state - $state"
+            
+            if [ "$state" = "terminated" ]; 
+            then
+              echo "Instance terminated, cannot be started..."
+            elif [ "$state" = "stopped" ]; 
+            then
+              echo "Starting instance..."
               aws ec2 start-instances --instance-ids $instance_id
+  
+              # Waits until the instance is running
               aws ec2 wait instance-running --instance-ids $instance_id
+            else
+              echo "Instance already running, skipping..."
             fi
           done
           
-          POLYBOT_SERVERS_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-polybot-ec2" \
-            --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
-#          echo "POLYBOT_SERVERS_IP<<EOF" >> "$GITHUB_ENV"
-#          echo "$POLYBOT_SERVERS_IP" >> "$GITHUB_ENV"
+          # Gets public ip from polybot ec2 by their tags (Gets only from running EC2s).
+          POLYBOT_SERVERS_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=maayana-polybot-ec2" \
+          --query 'Reservations[*].Instances[*].[PublicIpAddress]' \
+          --output text | grep -v None)
+          echo "The IPs of running Polybot EC2's are- $POLYBOT_SERVERS_IP"
+
           echo "$POLYBOT_SERVERS_IP=$POLYBOT_SERVERS_IP" >> "$GITHUB_ENV" # NEW CORRECTION
-          #echo "EOF" >> "$GITHUB_ENV"
 
       - name: Deploy new version
         env:
-          PRIVATE_KEY: ${{ secrets.US_EAST_1_PRIVATE_KEY }}
+          AWS_DEFAULT_REGION: ${{ inputs.region-code }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
         run: |
+          cd tf
+          # Gets from tfvars file the owner name
+          OWNER=$(cat region.$AWS_DEFAULT_REGION.tfvars | grep owner |  grep -o '".*"' | sed 's/"//g')
+          
+          cd ..
+          
+          # create .env file with needed values.
+          echo -e "TELEGRAM_APP_URL=https://$OWNER-polybot-$AWS_DEFAULT_REGION.int-devops.click:443
+          BUCKET_NAME=tf-$OWNER-images-bucket-$AWS_DEFAULT_REGION
+          SQS_QUEUE_NAME=tf-$OWNER-project-queue
+          REGION_NAME=$AWS_DEFAULT_REGION
+          DYNAMODB_TABLE=tf-$OWNER-predictions-dynamodb-table
+          SECRET_ID=tf-telegram-botToken-$AWS_DEFAULT_REGION" | tr -d ' ' > .env
+          
+          # Gets from env only the IPs
+          POLYBOT_SERVERS_IP=${POLYBOT_SERVERS_IP#*:}
+          echo "The IPs of running Polybot EC2's are- $POLYBOT_SERVERS_IP"
+          
+          export POLYBOT_IMAGE=shantalberkhof/my_polybot:v2
+          echo "polybot image - $POLYBOT_IMAGE"
+          
+          # Creates from secret the private key as file.
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          for SERVER_IP in $(echo $POLYBOT_SERVERS_IP); do
-            scp -i private_key .env ubuntu@$SERVER_IP:/home/ubuntu/
-            ssh -i private_key ubuntu@$SERVER_IP <<EOF
-              docker stop my_polybot || true
-              docker rm my_polybot || true
-              docker run -d -p 8443:8443 --restart always --env-file .env --name my_polybot shantalberkhof/my_polybot:v2
+          
+          # Do the needed actions for every ec2 if its on (has public ip)
+          for SERVER_IP in $(echo $POLYBOT_SERVERS_IP); 
+          do
+            # Copies .env file to ec2
+            scp -o StrictHostKeyChecking=no -i private_key .env ubuntu@${SERVER_IP}:/home/ubuntu/
+            # Connects to ec2
+            ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${SERVER_IP} <<EOF
+              POLYBOT_IMAGE=shantalberkhof/my_polybot:v2
+              echo $POLYBOT_IMAGE
+              # Deletes old latest image (if exists)
+              docker image ls | grep shantalberkhof/polybot-aws-project | grep v2
+              if [ $? -eq 0 ]
+              then
+                docker image rm shantalberkhof/my_polybot:v2
+                echo "latest image has deleted"
+              fi 
+              # Deploys new polybot version and stops older version (if exists)
+              docker ps | grep polybot 
+              if [ $? -eq 0 ]
+              then
+                docker stop polybot 
+                docker rm polybot 
+              fi 
+              # Starts new docker container from new image
+              docker run -d -p 8443:8443 --restart always --env-file .env --name polybot $POLYBOT_IMAGE
+              # Verify container's health
+              docker ps | grep polybot | grep Up
+              if [ $? -ne 0 ]
+              then
+                echo "docker run operation has failed in $SERVER_IP"
+                exit 1
+              fi
           EOF
           done
-
-  deploy-eu-central-1:
-    if: ${{ github.event.inputs['eu-central-1'] == 'true' }}
-    name: Deploy to eu-central-1 (Stockholm)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the repo code
-        uses: actions/checkout@v2
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
-
-      - name: Build and push Polybot image to DockerHub
-        run: |
-          cd polybot
-          docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
-          IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_polybot:v2
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME
-
-      - name: Get Polybot EC2's IP
-        run: |
-          export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-          export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          INSTANCES_IDS=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-polybot-ec2" \
-            --query 'Reservations[*].Instances[*].InstanceId' --output text)
-          
-          for instance_id in $INSTANCES_IDS; do
-            state=$(aws ec2 describe-instances --instance-ids $instance_id --query 'Reservations[*].Instances[*].State.Name' --output text)
-            if [ "$state" = "stopped" ]; then
-              aws ec2 start-instances --instance-ids $instance_id
-              aws ec2 wait instance-running --instance-ids $instance_id
-            fi
-          done
-          
-          POLYBOT_SERVERS_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-polybot-ec2" \
-            --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
-          echo "POLYBOT_SERVERS_IP<<EOF" >> "$GITHUB_ENV"
-          echo "$POLYBOT_SERVERS_IP" >> "$GITHUB_ENV"
-          echo "EOF" >> "$GITHUB_ENV"
-
-      - name: Deploy new version
-        env:
-          PRIVATE_KEY: ${{ secrets.EU_CENTRAL_1_PRIVATE_KEY }}
-        run: |
-          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          for SERVER_IP in $(echo $POLYBOT_SERVERS_IP); do
-            scp -i private_key .env ubuntu@$SERVER_IP:/home/ubuntu/
-            ssh -i private_key ubuntu@$SERVER_IP <<EOF
-              docker stop my_polybot || true
-              docker rm my_polybot || true
-              docker run -d -p 8443:8443 --restart always --env-file .env --name my_polybot shantalberkhof/my_polybot:v2
-          EOF
-          done
-
