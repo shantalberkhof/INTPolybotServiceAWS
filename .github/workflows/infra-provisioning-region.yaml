@@ -8,7 +8,7 @@ on:
         required: true
         type: string
     secrets:
-      TELEGRAM_TOKEN:
+      TELEGRAM_TOKEN: # the telegram token to each region
         required: true
       AWS_ACCESS_KEY_ID:
         required: true
@@ -44,14 +44,10 @@ jobs:
       - name: Terraform validate
         run: terraform validate
 
-      - name: Export token to env
-        env:
-          TF_VAR_botToken: ${{ secrets.TELEGRAM_TOKEN }}  # Ensure bot token is available
-
       - name: Terraform plan
         run: |
-          terraform plan -var-file=region.${{ inputs.region-code }}.tfvars # checks that the token can be used in Secrets Manager
-        timeout-minutes: 10
+          export TF_VAR_botToken=${{ secrets.TELEGRAM_TOKEN }}
+          terraform plan -var-file=region.${{ inputs.region-code }}.tfvars
 
       - name: Terraform apply
         id: apply
