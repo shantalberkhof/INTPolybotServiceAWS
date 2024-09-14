@@ -23,13 +23,13 @@ jobs:
       - name: Checkout the repo code
         uses: actions/checkout@v2
 
-      - name: Build and push Yolo image to DockerHub
-        run: |
-          cd yolo5
-          docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }} --password-stdin
-          IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5:v2
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME   
+#      - name: Build and push Yolo image to DockerHub
+#        run: |
+#          cd yolo5
+#          docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }} --password-stdin
+#          IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_yolo5:v2
+#          docker build -t $IMAGE_NAME .
+#          docker push $IMAGE_NAME
 
       - name: Get Yolo5 EC2's IP
         env:
