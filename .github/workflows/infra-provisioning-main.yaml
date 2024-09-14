@@ -11,7 +11,7 @@ on:
         required: false
         type: boolean
       eu-central-1:
-        description: 'Stockholm (eu-north-1)'
+        description: 'Stockholm (eu-central-1)'
         required: false
         type: boolean
 
@@ -32,6 +32,6 @@ jobs:
     with:
       region-code: eu-central-1
     secrets:
-      TELEGRAM_TOKEN: ${{ secrets.EU_NORTH_1_TELEGRAM_TOKEN }}
+      TELEGRAM_TOKEN: ${{ secrets.EU_CENTRAL_1_PRIVATE_KEY }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

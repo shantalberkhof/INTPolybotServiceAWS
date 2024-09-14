@@ -4,14 +4,14 @@
 name: Yolo5 Microservice Deployment
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # to run manually from GitHub
     inputs:
       us-east-1:
         description: 'Deploy to N.Virginia (us-east-1)'
         required: false
         type: boolean
-      eu-north-1:
-        description: 'Deploy to Stockholm (eu-north-1)'
+      eu-central-1:
+        description: 'Deploy to Stockholm (eu-central-1)'
         required: false
         type: boolean
 
@@ -30,7 +30,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.US_EAST_1_PRIVATE_KEY}}
+          aws-region: us-east-1
 
       - name: Build and push Yolo image to DockerHub
         run: |
@@ -64,8 +64,8 @@ jobs:
           YOLO5_SERVERS_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-yolo5-ec2" \
             --query 'Reservations[*].Instances[*].PublicIpAddress' --output text | grep -v None)
 
-          echo "YOLO5_SERVERS_IP<<EOF" >> "$GITHUB_ENV"
-          echo "$YOLO5_SERVERS_IP" >> "$GITHUB_ENV"
+#          echo "YOLO5_SERVERS_IP<<EOF" >> "$GITHUB_ENV"
+#          echo "$YOLO5_SERVERS_IP" >> "$GITHUB_ENV"
           echo "YOLO5_SERVERS_IP=$YOLO5_SERVERS_IP" >> "$GITHUB_ENV" # NEW CORRECTION
           # echo EOF >> "$GITHUB_ENV"
 
@@ -100,7 +100,7 @@ jobs:
 
   deploy-eu-central-1:
     if: ${{ github.event.inputs.eu-central-1 == 'true' }}
-    name: Deploy to eu-north-1 (Stockholm)
+    name: Deploy to eu-central-1 (Stockholm)
     runs-on: ubuntu-latest
 
     steps:
@@ -112,9 +112,9 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.EU_CENTRAL_1_PRIVATE_KEY }}
+          aws-region: eu-central-1
 
-      - name: Get Yolo5 EC2's IP in eu-north-1
+      - name: Get Yolo5 EC2's IP in eu-central-1
         env:
           AWS_DEFAULT_REGION: eu-central-1
         run: |
@@ -149,7 +149,7 @@ jobs:
       - name: Deploy YOLOv5 to EC2 in eu-central-1
         env:
           AWS_DEFAULT_REGION: eu-central-1
-          PRIVATE_KEY: ${{ secrets.EU_NORTH_1_PRIVATE_KEY }}
+          PRIVATE_KEY: ${{ secrets.EU_CENTRAL_1_PRIVATE_KEY }}
         run: |
           cd tf
           OWNER=$(grep owner region.eu-central-1.tfvars | grep -o '".*"' | sed 's/"//g')
