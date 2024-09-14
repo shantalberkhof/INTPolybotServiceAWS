@@ -1,5 +1,5 @@
 # PART 2 - automatically called by the main pipeline and provisions the infrastructure for a specific region.
-name: Polybot Infrastructure Terraform Specific Region
+name: Infrastructure Terraform Specific Region (part 2)
 
 on:
   workflow_call:
@@ -14,6 +14,7 @@ on:
         required: true
       AWS_SECRET_ACCESS_KEY:
         required: true
+
 
 jobs:
   Terraform:
@@ -41,23 +42,15 @@ jobs:
         run: terraform workspace select ${{ inputs.region-code }} || terraform workspace new ${{ inputs.region-code }}
 
       - name: Terraform validate
-        run: terraform validate # ensures that the code is well-formed and complies with the basic structure and rules
+        run: terraform validate
 
-      - name: Terraform plan
+      - name: Export token and Terraform plan
         run: |
-          if [ "${{ inputs.region-code }}" = "us-east-1" ]; then
-            export TF_VAR_botToken=${{ secrets.TELEGRAM_TOKEN }}
-          elif [ "${{ inputs.region-code }}" = "eu-central-1" ]; then
-            export TF_VAR_botToken=${{ secrets.TELEGRAM_TOKEN2 }}
-          fi
-          terraform plan -var-file=region.${{ inputs.region-code }}.tfvars # checks the actual infrastructure state 
+          export TF_VAR_botToken=${{ secrets.TELEGRAM_TOKEN }} #defined in the main CICD based on the region
+          terraform plan -var-file=region.${{ inputs.region-code }}.tfvars
 
       - name: Terraform apply
         id: apply
         run: |
-          if [ "${{ inputs.region-code }}" = "us-east-1" ]; then
-            export TF_VAR_botToken=${{ secrets.TELEGRAM_TOKEN }}
-          elif [ "${{ inputs.region-code }}" = "eu-central-1" ]; then
-            export TF_VAR_botToken=${{ secrets.TELEGRAM_TOKEN2 }}
-          fi
+          export TF_VAR_botToken=${{ secrets.TELEGRAM_TOKEN }}
           terraform apply -auto-approve -var-file=region.${{ inputs.region-code }}.tfvars

@@ -1,5 +1,5 @@
 # To be used to destroy your infrastructure.
-name: Polybot Infrastructure Destroy Terraform
+name: Infrastructure Destroy Terraform
 
 on:
   workflow_dispatch:

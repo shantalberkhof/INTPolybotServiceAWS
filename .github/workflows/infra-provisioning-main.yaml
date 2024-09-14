@@ -1,6 +1,6 @@
 # PART 1 - This is the main pipeline. It should be manually triggered from the GitHub Actions tab,
 # while selecting the regions to provision the infrastructure.
-name: Polybot Infrastructure Terraform Main
+name: Infrastructure Terraform Main (part 1)
 
 on:
   workflow_dispatch: # Trigger that allows to manually start the workflow from the GitHub Actions tab in the repository
