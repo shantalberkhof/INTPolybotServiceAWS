@@ -92,10 +92,10 @@ jobs:
             scp -o StrictHostKeyChecking=no -i private_key .env ubuntu@$SERVER_IP:/home/ubuntu/
             ssh -o StrictHostKeyChecking=no -i private_key ubuntu@$SERVER_IP <<EOF
               YOLO5_IMAGE=shantalberkhof/my_yolo5:v2 # was latest
-              docker stop yolo5 || true && docker rm yolo5 || true
-              docker run -d --restart always --env-file /home/ubuntu/.env --name yolo5 \$YOLO5_IMAGE
-              docker ps | grep yolo5 || exit 1
-# EOF
+              docker stop my_yolo5 || true && docker rm my_yolo5 || true
+              docker run -d --restart always --env-file /home/ubuntu/.env --name my_yolo5 \$YOLO5_IMAGE
+              docker ps | grep my_yolo5 || exit 1
+          EOF
           done
 
   deploy-eu-central-1:
@@ -169,8 +169,8 @@ jobs:
             scp -o StrictHostKeyChecking=no -i private_key .env ubuntu@$SERVER_IP:/home/ubuntu/
             ssh -o StrictHostKeyChecking=no -i private_key ubuntu@$SERVER_IP <<EOF
               YOLO5_IMAGE=shantalberkhof/my_yolo5:v2 # was latest
-              docker stop yolo5 || true && docker rm yolo5 || true
-              docker run -d --restart always --env-file /home/ubuntu/.env --name yolo5 \$YOLO5_IMAGE
-              docker ps | grep yolo5 || exit 1
-# EOF
+              docker stop my_yolo5 || true && docker rm my_yolo5 || true
+              docker run -d --restart always --env-file /home/ubuntu/.env --name my_yolo5 \$YOLO5_IMAGE
+              docker ps | grep my_yolo5 || exit 1
+            EOF
           done
