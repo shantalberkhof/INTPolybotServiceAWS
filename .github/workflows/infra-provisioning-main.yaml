@@ -22,7 +22,7 @@ jobs:
     with:
       region-code: us-east-1
     secrets:
-      TELEGRAM_TOKEN: ${{ secrets.US_EAST_1_TELEGRAM_TOKEN }}
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -32,6 +32,6 @@ jobs:
     with:
       region-code: eu-central-1
     secrets:
-      TELEGRAM_TOKEN: ${{ secrets.EU_CENTRAL_1_PRIVATE_KEY }}
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN2 }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
