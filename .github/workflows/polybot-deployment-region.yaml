@@ -1,6 +1,6 @@
 # Commit and push this and: region-us-east-1.tfvars OR region-eu-central-1.tfvars
 
-name: Polybot Microservice Deployment
+name: Infra Terraform Polybot
 
 on:
   workflow_dispatch: # to run manually from GitHub

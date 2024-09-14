@@ -1,7 +1,7 @@
 # Commit and push this and: region-us-east-1.tfvars OR region-eu-central-1.tfvars
 # Export YOLO5_IMAGE=shantalberkhof/my_yolo5:v2 # was :latest
 
-name: Yolo5 Microservice Deployment
+name: Infra Terraform Yolo5
 
 on:
   workflow_dispatch: # to run manually from GitHub
