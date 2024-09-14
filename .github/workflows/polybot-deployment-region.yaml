@@ -26,7 +26,7 @@ jobs:
       - name: Build and push Polybot image to DockerHub
         run: |
           cd polybot
-          docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} -p ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }}
+          echo ${{ secrets.SHANTAL_DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.SHANTAL_DOCKERHUB_USERNAME }} --password-stdin
           IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_polybot:v2
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME

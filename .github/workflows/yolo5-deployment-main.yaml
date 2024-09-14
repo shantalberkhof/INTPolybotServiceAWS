@@ -14,7 +14,8 @@ on:
 
 jobs:
   us-east-1:
-    if: ${{ github.event.inputs.us-east-1 == 'true' }}
+#    if: ${{ github.event.inputs.us-east-1 == 'true' }}
+    if: ${{ github.event.inputs['us-east-1'] == 'true' }}
     uses: ./.github/workflows/yolo5-deployment-region.yaml
     with:
       region-code: us-east-1
@@ -24,7 +25,8 @@ jobs:
       PRIVATE_KEY: ${{ secrets.US_EAST_1_PRIVATE_KEY }}
 
   eu-central-1:
-    if: ${{ github.event.inputs.eu-central-1 == 'true' }}
+#    if: ${{ github.event.inputs.eu-central-1 == 'true' }}
+    if: ${{ github.event.inputs['eu-central-1'] == 'true' }}
     uses: ./.github/workflows/yolo5-deployment-region.yaml
     with:
       region-code: eu-central-1
