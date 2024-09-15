@@ -64,7 +64,9 @@ jobs:
           echo "The IPs of running Polybot EC2's are- $POLYBOT_SERVERS_IP"
 
           #echo "$POLYBOT_SERVERS_IP=$POLYBOT_SERVERS_IP" >> "$GITHUB_ENV" # NEW CORRECTION
-          echo "POLYBOT_SERVERS_IP=\"$POLYBOT_SERVERS_IP\"" >> "$GITHUB_ENV"
+          echo "POLYBOT_SERVERS_IP=$(echo $POLYBOT_SERVERS_IP | tr -d '\r')" >> "$GITHUB_ENV"
+          echo "$POLYBOT_SERVERS_IP"
+
 
       - name: Deploy new version
         env:
