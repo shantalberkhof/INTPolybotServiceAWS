@@ -64,7 +64,6 @@ jobs:
           echo "YOLO5_SERVERS_IP=$YOLO5_SERVERS_IP" >> "$GITHUB_ENV" # NEW CORRECTION
           #echo EOF >> "$GITHUB_ENV"
 
-
       - name: Deploy YOLOv5 to EC2 in specific region
         env:
           AWS_DEFAULT_REGION: ${{ inputs.region-code }}
