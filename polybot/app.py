@@ -11,13 +11,17 @@ from bot_functions import get_secret, load_telegram_token
 
 app = flask.Flask(__name__)
 
-# Initialize DynamoDB client
-dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
-table = dynamodb.Table('shantal-dynamoDB-aws')
-
 # from the dockerfile
+REGION_NAME = os.environ['REGION_NAME'] # new from terraform
+SECRET_ID = os.environ['SECRET_ID'] # new from terraform
+DYNAMODB_TABLE = os.environ['DYNAMODB_TABLE'] # new from terraform
 TELEGRAM_APP_URL = os.getenv('TELEGRAM_APP_URL')
 print(f"telegram app url: {TELEGRAM_APP_URL}")
+
+# Initialize DynamoDB client
+dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
+table = dynamodb.Table('DYNAMODB_TABLE')
+# table = dynamodb.Table('shantal-dynamoDB-aws')
 
 
 logging.basicConfig(level=logging.INFO)
@@ -30,10 +34,16 @@ print(f"Retrieved Public Key Value: {public_key_value}")
 
 # TODO load TELEGRAM_TOKEN value from Secret Manager
 
-TELEGRAM_TOKEN = load_telegram_token()
-if TELEGRAM_TOKEN:
-    print(f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}")
-    bot = ObjectDetectionBot(TELEGRAM_TOKEN, TELEGRAM_APP_URL, public_key_value)
+secretsmanager = boto3.client('secretsmanager', region_name=REGION_NAME)
+response = secretsmanager.get_secret_value(SecretId=SECRET_ID)
+secret = response['SecretString']
+
+TELEGRAM_TOKEN = secret
+
+# TELEGRAM_TOKEN = load_telegram_token()
+# if TELEGRAM_TOKEN:
+#     print(f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}")
+#     bot = ObjectDetectionBot(TELEGRAM_TOKEN, TELEGRAM_APP_URL, public_key_value)
 
 
 # Health checks on ALB
@@ -81,7 +91,6 @@ def results():
 
 @app.route(f'/loadTest/', methods=['POST'])
 def load_test():
-    logger.info(f'Calling handle message function')
     req = request.get_json()
     bot.handle_message(req['message'])
     return 'Ok'
