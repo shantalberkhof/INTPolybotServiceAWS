@@ -58,13 +58,11 @@ jobs:
           done
           
           # Gets public ip from polybot ec2 by their tags (Gets only from running EC2s).
-#          POLYBOT_SERVERS_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-polybot-ec2" \
-#          --query 'Reservations[*].Instances[*].[PublicIpAddress]' \
-#          --output text | grep -v None)
-          # Fetch public IP addresses from running Polybot EC2 instances (remove duplicates)
           POLYBOT_SERVERS_IP=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=shantalberkhof-polybot-ec2" \
-          --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text | grep -v None | sort | uniq)
-          #echo "$POLYBOT_SERVERS_IP=$POLYBOT_SERVERS_IP" >> "$GITHUB_ENV" # NEW CORRECTION
+          --query 'Reservations[*].Instances[*].[PublicIpAddress]' \
+          --output text | grep -v None)
+
+#          echo "$POLYBOT_SERVERS_IP=$POLYBOT_SERVERS_IP" >> "$GITHUB_ENV" # NEW CORRECTION
           echo "POLYBOT_SERVERS_IP=$(echo $POLYBOT_SERVERS_IP | tr -d '\r')" >> "$GITHUB_ENV"
 
 
