@@ -27,7 +27,6 @@ table = dynamodb.Table('DYNAMODB_TABLE')
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
-
 # Get secret of public key (the certificate to use HTTPS in Telegram)
 public_key_value = get_secret("shantal-YOURPUBLICpem", REGION_NAME)
 print(f"Retrieved Public Key Value: {public_key_value}")
