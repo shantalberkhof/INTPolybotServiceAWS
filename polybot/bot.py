@@ -7,8 +7,9 @@ import boto3
 import json
 import uuid
 import time
+from app import REGION_NAME  # Import REGION_NAME from app.py
 import concurrent.futures
-
+REGION_NAME = os.environ['REGION_NAME']  # Access the environment variable directly in bot.py
 
 class Bot:
 
@@ -96,8 +97,8 @@ class Bot:
 class ObjectDetectionBot(Bot):
     def __init__(self, token, url, publickey):
         super().__init__(token, url, publickey)
-        self.s3_client = boto3.client('s3', region_name='us-east-2')
-        self.sqs_client = boto3.client('sqs', region_name='us-east-2')
+        self.s3_client = boto3.client('s3', region_name=REGION_NAME)
+        self.sqs_client = boto3.client('sqs', region_name=REGION_NAME)
         self.in_hdl_mes = 0
 
     def handle_message(self, msg):

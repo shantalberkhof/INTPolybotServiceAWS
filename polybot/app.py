@@ -29,7 +29,7 @@ logger = logging.getLogger()
 
 
 # Get secret of public key (the certificate to use HTTPS in Telegram)
-public_key_value = get_secret("shantal-YOURPUBLICpem", "us-east-2")
+public_key_value = get_secret("shantal-YOURPUBLICpem", REGION_NAME)
 print(f"Retrieved Public Key Value: {public_key_value}")
 
 # TODO load TELEGRAM_TOKEN value from Secret Manager
