@@ -24,7 +24,6 @@ dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
 table = dynamodb.Table('DYNAMODB_TABLE')
 # table = dynamodb.Table('shantal-dynamoDB-aws')
 
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 

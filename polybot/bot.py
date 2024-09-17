@@ -9,12 +9,11 @@ import uuid
 import time
 from app import REGION_NAME  # Import REGION_NAME from app.py
 import concurrent.futures
-REGION_NAME = os.environ['REGION_NAME']  # Access the environment variable directly in bot.py
-
+# REGION_NAME = os.environ['REGION_NAME']  # Access the environment variable directly in bot.py
 
 class Bot:
 
-    def __init__(self, token, telegram_chat_url, publickey):
+    def __init__(self, token, telegram_chat_url): # passed before publickey too.
         # create a new instance of the TeleBot class.
         # all communication with Telegram servers are done using self.telegram_bot_client
         self.telegram_bot_client = telebot.TeleBot(token)

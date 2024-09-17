@@ -26,13 +26,21 @@ jobs:
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
 
+#      - name: Set up SSH key
+#        run: |
+#          echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key1.pem
+#          chmod 600 private_key1.pem
+#          echo "${{ secrets.EC2_SSH_PRIVATE_KEY2 }}" > private_key2.pem
+#          chmod 600 private_key2.pem
+      
       - name: Set up SSH key
         run: |
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key1.pem
+          echo "${{ secrets.US_EAST_1_PRIVATE_KEY }}" > private_key1.pem
           chmod 600 private_key1.pem          
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY2 }}" > private_key2.pem
+          echo "${{ secrets.US_EAST_1_PRIVATE_KEY }}" > private_key2.pem
           chmod 600 private_key2.pem
-      
+          
+          
 
   DeployPolybot: # step 2
     name: Deploy to Polybot EC2 Instance
@@ -82,7 +90,7 @@ jobs:
          
           CurKey=private_key1.pem
         
-          if [ "$PUBLIC_IP" == "18.207.150.1" ]; then
+          if [ "$PUBLIC_IP" == "52.91.140.29" ]; then
             CurKey=private_key2.pem
           fi
         

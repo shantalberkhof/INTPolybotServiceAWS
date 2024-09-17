@@ -2,7 +2,9 @@ import boto3
 from loguru import logger
 from botocore.exceptions import ClientError
 import requests
+import os
 
+REGION_NAME = os.environ['REGION_NAME'] # new from terraform
 
 def get_secret(secret_name, region_name):
 
@@ -25,8 +27,9 @@ def get_secret(secret_name, region_name):
 
 def load_telegram_token():
     secret_name = 'shantal-telegram-bot-token'
-    region_name = 'us-east-2'
-    secrets = get_secret(secret_name, region_name)
+    # region_name = 'us-east-2'
+    region_name=REGION_NAME
+    secrets = get_secret(secret_name, REGION_NAME)
     if secrets is None:
         logger.error("Unable to retrieve secrets. Exiting.")
         return None
