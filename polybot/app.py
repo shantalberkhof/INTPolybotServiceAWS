@@ -45,7 +45,6 @@ TELEGRAM_TOKEN = secret
 #     print(f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}")
 #     bot = ObjectDetectionBot(TELEGRAM_TOKEN, TELEGRAM_APP_URL, public_key_value)
 
-
 # Health checks on ALB
 @app.route('/', methods=['GET'])
 def index():

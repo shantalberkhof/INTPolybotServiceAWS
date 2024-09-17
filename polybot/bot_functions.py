@@ -35,7 +35,6 @@ def load_telegram_token():
         return None
     return secrets
 
-
 def send_telegram_message(chat_id, text):
     url = f"https://api.telegram.org/bot{load_telegram_token()}/sendMessage"
     payload = {
