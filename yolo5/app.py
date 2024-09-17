@@ -18,10 +18,12 @@ queue_name = os.environ['SQS_QUEUE_NAME'] #shantal-queue-aws
 # queue_url= os.environ['https://sqs.us-east-2.amazonaws.com/019273956931/shantal-queue-aws']
 
 # Initialize AWS clients
-sqs_client = boto3.client('sqs', region_name='us-east-2')
-s3_client = boto3.client('s3', region_name='us-east-2')
-dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
-table = dynamodb.Table('shantal-dynamoDB-aws') # Set the table name
+REGION_NAME = os.environ['REGION_NAME'] # new from terraform
+sqs_client = boto3.client('sqs', region_name=REGION_NAME)
+s3_client = boto3.client('s3', region_name=REGION_NAME)
+dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
+table = dynamodb.Table(DYNAMODB_TABLE)
+# table = dynamodb.Table('shantal-dynamoDB-aws') # Set the table name
 
 # test 3
 with open("data/coco128.yaml", "r") as stream:

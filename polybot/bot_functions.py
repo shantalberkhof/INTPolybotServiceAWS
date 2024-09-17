@@ -9,7 +9,7 @@ def get_secret(secret_name, region_name):
     # Create a Secrets Manager client
     #session = boto3.session.Session()
     #client = session.client(service_name='secretsmanager', region_name=region_name)
-    client = boto3.client('secretsmanager', region_name='us-east-2')
+    client = boto3.client('secretsmanager', region_name=REGION_NAME)
 
     try:
         get_secret_value_response = client.get_secret_value(SecretId=secret_name)

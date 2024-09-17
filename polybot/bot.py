@@ -96,8 +96,8 @@ class Bot:
 
 
 class ObjectDetectionBot(Bot):
-    def __init__(self, token, url, publickey):
-        super().__init__(token, url, publickey)
+    def __init__(self, token, url):
+        super().__init__(token, url)
         self.s3_client = boto3.client('s3', region_name=REGION_NAME)
         self.sqs_client = boto3.client('sqs', region_name=REGION_NAME)
         self.in_hdl_mes = 0
