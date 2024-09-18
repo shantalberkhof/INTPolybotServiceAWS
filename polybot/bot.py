@@ -7,9 +7,9 @@ import boto3
 import json
 import uuid
 import time
-from app import REGION_NAME  # Import REGION_NAME from app.py
+# from app import REGION_NAME  # Import REGION_NAME from app.py
 import concurrent.futures
-# REGION_NAME = os.environ['REGION_NAME']  # Access the environment variable directly in bot.py
+REGION_NAME = os.environ['REGION_NAME']  # Access the environment variable directly in bot.py
 
 class Bot:
 
