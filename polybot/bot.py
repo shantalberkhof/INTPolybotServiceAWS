@@ -193,4 +193,3 @@ class ObjectDetectionBot(Bot):
             logger.info(f'===========> Sent message to SQS: {response.get("MessageId")}')
             logger.info(f'=========== > < ===========')
             time.sleep(8)  # Add a delay to avoid hitting Telegram rate limits
-

@@ -43,3 +43,4 @@ def send_telegram_message(chat_id, text):
     }
     response = requests.post(url, json=payload)
     return response.json()
+

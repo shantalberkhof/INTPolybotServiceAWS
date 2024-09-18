@@ -94,6 +94,7 @@ def load_test():
     bot.handle_message(req['message'])
     return 'Ok'
 
+
 if __name__ == "__main__":
     if TELEGRAM_TOKEN:
         bot = ObjectDetectionBot(TELEGRAM_TOKEN, TELEGRAM_APP_URL)
