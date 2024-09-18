@@ -58,14 +58,14 @@ jobs:
     - name: Deploy to AWS EC2
       run: |
         IMAGE_NAME=${{ secrets.SHANTAL_DOCKERHUB_USERNAME }}/my_polybot:v2
-        echo "AWS_REGION: $AWS_REGION2"
+        echo "AWS_REGION: $secrets.AWS_REGION2"
 
         echo "${{ secrets.US_EAST_1_PRIVATE_KEY }}" > private_key1.pem
         chmod 400 private_key1.pem          
         echo "${{ secrets.US_EAST_1_PRIVATE_KEY }}" > private_key2.pem
         chmod 400 private_key2.pem
         
-        POLYBOT_INSTANCES=$(aws elbv2 describe-target-health --target-group-arn ${{ secrets.POLYBOT_TARGET_GROUP_ARN }} --query 'TargetHealthDescriptions[*].Target.Id' --output text --region ${{ secrets.AWS_REGION }})
+        POLYBOT_INSTANCES=$(aws elbv2 describe-target-health --target-group-arn ${{ secrets.POLYBOT_TARGET_GROUP_ARN1 }} --query 'TargetHealthDescriptions[*].Target.Id' --output text --region ${{ secrets.AWS_REGION2 }})
         echo "POLYBOT_INSTANCES: $POLYBOT_INSTANCES"
         
         for instance in $POLYBOT_INSTANCES; do
