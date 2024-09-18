@@ -9,10 +9,10 @@ on:
 
 env:
   TAG_KEY: Name
-  TAG_VALUE: shantal-aws-yolo1
-  BUCKET_NAME: shantal-awsproject
-  SQS_QUEUE_NAME: shantal-queue-aws
-  EC2_PUBLIC_IP_YOLO5: 18.188.13.117 #needs to be changed each time here
+  TAG_VALUE: shantalberkhof-yolo5-ec2
+  BUCKET_NAME: tf-shantalberkhof-images-bucket-us-east-1
+  SQS_QUEUE_NAME: tf-shantalberkhof-project-queue
+  EC2_PUBLIC_IP_YOLO5: 54.205.59.167 #needs to be changed each time here
 
 jobs:
   build-deploy:
@@ -27,7 +27,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+        aws-region: ${{ secrets.AWS_REGION2 }}
 
 
     - name: Log in to Docker Hub
@@ -55,7 +55,7 @@ jobs:
           --output text)
 
         ASG_INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
-          --auto-scaling-group-names "shantal-asg-aws" \
+          --auto-scaling-group-names "tf-shantalberkhof-yolo5-asg" \
           --query "AutoScalingGroups[0].Instances[*].InstanceId" \
           --output text)
 
@@ -81,7 +81,7 @@ jobs:
     - name: Deploy to YOLO5 EC2 Instances
       # Deploy to YOLO5 EC2 Instances
       run: |
-        echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key1.pem
+        echo "${{ secrets.US_EAST_1_PRIVATE_KEY }}" > private_key1.pem
         chmod 400 private_key1.pem  
 
         echo "Deploying all YOLO5 instances ..."
@@ -97,14 +97,14 @@ jobs:
             continue
           fi
             
-          INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $id --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION }})
+          INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids $id --query 'Reservations[0].Instances[0].State.Name' --output text --region ${{ secrets.AWS_REGION2 }})
 
           if [ "$INSTANCE_STATE" != "running" ]; then
             echo "Instance $id is $INSTANCE_STATE. Starting the instance..."
-            aws ec2 start-instances --instance-ids $id --region ${{ secrets.AWS_REGION }}
+            aws ec2 start-instances --instance-ids $id --region ${{ secrets.AWS_REGION2 }}
         
             echo "Waiting for instance $id to be in running state..."
-            aws ec2 wait instance-running --instance-ids $id --region ${{ secrets.AWS_REGION }}
+            aws ec2 wait instance-running --instance-ids $id --region ${{ secrets.AWS_REGION2 }}
           fi
                     
           # Retry SSH connection up to 5 times with a delay
