@@ -26,6 +26,7 @@ jobs:
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
 
+
 #      - name: Set up SSH key
 #        run: |
 #          echo "${{ secrets.EC2_SSH_PRIVATE_KEY1 }}" > private_key1.pem

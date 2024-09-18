@@ -11,6 +11,7 @@ import time
 import concurrent.futures
 REGION_NAME = os.environ['REGION_NAME']  # Access the environment variable directly in bot.py
 
+
 class Bot:
 
     def __init__(self, token, telegram_chat_url): # passed before publickey too.
