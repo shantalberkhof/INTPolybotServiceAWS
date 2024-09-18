@@ -1,5 +1,5 @@
 name: Polybot Microservice Deployment
-
+# docker run --name my_polybot -p 8443:8443 -e REGION_NAME='us-east-1' -e DYNAMODB_TABLE='tf-shantalberkhof-predictions-dynamodb-table' -e TELEGRAM_APP_URL='6889860814:AAGJU6KNTn0rmNx17XiI49IenE_642rvAnQ' shantalberkhof/my_polybot:v2
 on:
   push:
     paths:
@@ -107,7 +107,7 @@ jobs:
               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker rm my_polybot || true"
         
               ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker pull $IMAGE_NAME"
-              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker run -d --name my_polybot -p 8443:8443 -e REGION_NAME='us-east-1' $IMAGE_NAME"
+              ssh -o StrictHostKeyChecking=no -i $CurKey ubuntu@$PUBLIC_IP "sudo docker run -d --name my_polybot -p 8443:8443 -e REGION_NAME='us-east-1' -e DYNAMODB_TABLE='tf-shantalberkhof-predictions-dynamodb-table' -e TELEGRAM_APP_URL='6889860814:AAGJU6KNTn0rmNx17XiI49IenE_642rvAnQ' $IMAGE_NAME"
               break
             else
               echo "SSH connection to $PUBLIC_IP failed. Retrying in 10 seconds..."
