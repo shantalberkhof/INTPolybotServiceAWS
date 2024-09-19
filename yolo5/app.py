@@ -14,17 +14,17 @@ from pathlib import Path
 
 images_bucket = os.environ['BUCKET_NAME'] #shantal-awsproject
 queue_name = os.environ['SQS_QUEUE_NAME'] #shantal-queue-aws
+REGION_NAME = os.environ['REGION_NAME'] # new from terraform
+DYNAMODB_TABLE = os.environ['DYNAMODB_TABLE']  # DynamoDB table name
+ALB_URL = os.environ['ALB_URL']
 
 # queue_url= os.environ['https://sqs.us-east-2.amazonaws.com/019273956931/shantal-queue-aws']
 
 # Initialize AWS clients
-REGION_NAME = os.environ['REGION_NAME'] # new from terraform
 sqs_client = boto3.client('sqs', region_name=REGION_NAME)
 s3_client = boto3.client('s3', region_name=REGION_NAME)
 #dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
-DYNAMODB_TABLE = os.environ['DYNAMODB_TABLE']  # DynamoDB table name
 dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
-ALB_URL = os.environ['ALB_URL']
 
 # table = dynamodb.Table(DYNAMODB_TABLE)
 # table = dynamodb.Table('shantal-dynamoDB-aws') # Set the table name
@@ -38,9 +38,10 @@ with open("data/coco128.yaml", "r") as stream:
 def consume():
     while True:
         try:
+            queue_url = sqs_client.get_queue_url(QueueName=queue_name)['QueueUrl']
             response = sqs_client.receive_message(
                 #QueueUrl="https://sqs.us-east-2.amazonaws.com/019273956931/shantal-queue-aws",
-                QueueUrl=f'http://{ALB_URL}',
+                QueueUrl=queue_url,
                 MaxNumberOfMessages=1,
                 WaitTimeSeconds=5)
 
