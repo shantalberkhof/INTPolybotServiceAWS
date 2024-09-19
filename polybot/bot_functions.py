@@ -6,7 +6,6 @@ import os
 
 REGION_NAME = os.environ['REGION_NAME'] # new from terraform
 
-
 def get_secret(secret_name, region_name):
 
     # Create a Secrets Manager client

@@ -41,7 +41,6 @@ jobs:
           echo "${{ secrets.US_EAST_1_PRIVATE_KEY }}" > private_key2.pem
           chmod 600 private_key2.pem
           
-          
 
   DeployPolybot: # step 2
     name: Deploy to Polybot EC2 Instance

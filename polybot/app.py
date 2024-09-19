@@ -90,7 +90,6 @@ def results():
         return 'Internal server error', 500
 
 
-
 @app.route(f'/loadTest/', methods=['POST'])
 def load_test():
     req = request.get_json()
