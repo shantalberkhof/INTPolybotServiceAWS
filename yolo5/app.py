@@ -29,7 +29,7 @@ ALB_URL = os.environ['ALB_URL']
 # table = dynamodb.Table(DYNAMODB_TABLE)
 # table = dynamodb.Table('shantal-dynamoDB-aws') # Set the table name
 
-# test 2
+# test 1
 with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
 

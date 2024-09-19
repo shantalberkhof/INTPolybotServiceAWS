@@ -116,7 +116,7 @@ jobs:
               ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker rm my_yolo5 || true"
         
               ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker pull shantalberkhof/my_yolo5:v2"
-              ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker run -d --name my_yolo5 -e BUCKET_NAME=${{ env.BUCKET_NAME }} -e SQS_QUEUE_NAME=${{ env.SQS_QUEUE_NAME }} shantalberkhof/my_yolo5:v2"
+              ssh -o StrictHostKeyChecking=no -i private_key1.pem ubuntu@$PUBLIC_IP "sudo docker run -d --name my_yolo5 -e REGION_NAME='us-east-1' -e BUCKET_NAME=tf-shantalberkhof-images-bucket-us-east-1 -e SQS_QUEUE_NAME=tf-shantalberkhof-project-queue -e DYNAMODB_TABLE='tf-shantalberkhof-predictions-dynamodb-table' -e ALB_URL='https://tf-shantalberkhof-polybot-lb-1994633323.us-east-1.elb.amazonaws.com' shantalberkhof/my_yolo5:v2"
               break
             else
               echo "SSH connection to $PUBLIC_IP failed. Retrying in 10 seconds..."
