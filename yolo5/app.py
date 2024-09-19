@@ -150,7 +150,9 @@ def consume():
 
                         # TODO perform a GET request to Polybot to `/results` endpoint ---------------------------------------------------
 
-                        callback_url = 'http://shantal-aws-alb-1835467939.us-east-2.elb.amazonaws.com/results'  # YOLO5 will send a POST request to this URL CHECK
+                        #callback_url = 'http://shantal-aws-alb-1835467939.us-east-2.elb.amazonaws.com/results'  # YOLO5 will send a POST request to this URL CHECK
+                        callback_url = f'http://{ALB_URL}/results?predictionId={prediction_id}'
+
                         try:
                             # Perform the GET request to the `/results` endpoint with the predictionId as a query parameter
                             logger.info(f'TRY TO PERFORM A GET REQUEST 1: {callback_url}?predictionId={prediction_id}')
