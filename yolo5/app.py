@@ -24,6 +24,7 @@ s3_client = boto3.client('s3', region_name=REGION_NAME)
 #dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
 DYNAMODB_TABLE = os.environ['DYNAMODB_TABLE']  # DynamoDB table name
 dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
+ALB_URL = os.environ['ALB_URL']
 
 # table = dynamodb.Table(DYNAMODB_TABLE)
 # table = dynamodb.Table('shantal-dynamoDB-aws') # Set the table name
