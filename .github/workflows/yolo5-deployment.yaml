@@ -14,7 +14,7 @@ env:
   TAG_VALUE: shantalberkhof-yolo5-ec2
   BUCKET_NAME: tf-shantalberkhof-images-bucket-us-east-1
   SQS_QUEUE_NAME: tf-shantalberkhof-project-queue
-  EC2_PUBLIC_IP_YOLO5: 54.205.59.167 #needs to be changed each time here
+  EC2_PUBLIC_IP_YOLO5: 3.90.35.152 #needs to be changed each time here
 
 jobs:
   build-deploy:
