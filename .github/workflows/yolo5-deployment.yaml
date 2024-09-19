@@ -16,7 +16,6 @@ env:
   SQS_QUEUE_NAME: tf-shantalberkhof-project-queue
   EC2_PUBLIC_IP_YOLO5: 3.90.35.152 #needs to be changed each time here
 
-
 jobs:
   build-deploy:
     runs-on: ubuntu-latest

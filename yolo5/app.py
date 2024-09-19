@@ -38,7 +38,8 @@ def consume():
     while True:
         try:
             response = sqs_client.receive_message(
-                QueueUrl="https://sqs.us-east-2.amazonaws.com/019273956931/shantal-queue-aws",
+                #QueueUrl="https://sqs.us-east-2.amazonaws.com/019273956931/shantal-queue-aws",
+                QueueUrl=f'http://{ALB_URL}',
                 MaxNumberOfMessages=1,
                 WaitTimeSeconds=5)
 
