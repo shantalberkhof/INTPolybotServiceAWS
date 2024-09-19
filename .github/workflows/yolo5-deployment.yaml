@@ -47,7 +47,6 @@ jobs:
         docker build -t $IMAGE_NAME .
         docker push $IMAGE_NAME      
 
-
     - name: Fetch YOLO5 EC2 Instance IDs
       # Fetch instance IDs based on the ASG name and include the original EC2 instance
       run: |

@@ -21,8 +21,11 @@ queue_name = os.environ['SQS_QUEUE_NAME'] #shantal-queue-aws
 REGION_NAME = os.environ['REGION_NAME'] # new from terraform
 sqs_client = boto3.client('sqs', region_name=REGION_NAME)
 s3_client = boto3.client('s3', region_name=REGION_NAME)
+#dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
+DYNAMODB_TABLE = os.environ['DYNAMODB_TABLE']  # DynamoDB table name
 dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
-table = dynamodb.Table(DYNAMODB_TABLE)
+
+# table = dynamodb.Table(DYNAMODB_TABLE)
 # table = dynamodb.Table('shantal-dynamoDB-aws') # Set the table name
 
 # test 2
@@ -140,7 +143,7 @@ def consume():
 
                         # TODO store the prediction_summary in a DynamoDB table ---------------------------------------------------
 
-                        table.put_item(Item=prediction_summary)
+                        dynamodb.put_item(Item=prediction_summary)
                         logger.info(f'SAVED PREDICTION SUMMARY to DynamoDB')
                         logger.info(f'=========> Prediction summary: {prediction_summary}')
                         time.sleep(3)  # Add a delay
