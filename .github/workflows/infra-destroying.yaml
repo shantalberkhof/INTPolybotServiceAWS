@@ -20,11 +20,12 @@ jobs:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    strategy:
-      matrix:
-        region:
-          - us-east-1
-          - eu-central-1
+#    strategy:
+#      matrix:
+#        region:
+#          - us-east-1
+#          - eu-central-1
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -33,18 +34,39 @@ jobs:
         with:
           terraform_version: 1.7.0
 
-      - name: Infrastructure destroying
-        if: ${{ github.event.inputs[ matrix.region ] == 'true' }}
+      # Run only if 'us-east-1' is selected
+      - name: Destroy us-east-1
+        if: ${{ github.event.inputs['us-east-1'] == 'true' }}
         working-directory: ./tf
         run: |
-          # init terraform
           terraform init
-
-          # select workspace or create if needed
-          terraform workspace select ${{ matrix.region }}  || terraform workspace new ${{ matrix.region }}
-
-          # clean up the bot token
+          terraform workspace select us-east-1 || terraform workspace new us-east-1
           export TF_VAR_botToken=no-token
-          
-          # tf destroy
-          terraform destroy -auto-approve -var-file=region.${{ matrix.region }}.tfvars
+          terraform destroy -auto-approve -var-file=region.us-east-1.tfvars
+
+      # Run only if 'eu-central-1' is selected
+      - name: Destroy eu-central-1
+        if: ${{ github.event.inputs['eu-central-1'] == 'true' }}
+        working-directory: ./tf
+        run: |
+          terraform init
+          terraform workspace select eu-central-1 || terraform workspace new eu-central-1
+          export TF_VAR_botToken=no-token
+          terraform destroy -auto-approve -var-file=region.eu-central-1.tfvars
+#
+#
+#      - name: Infrastructure destroying
+#        if: ${{ github.event.inputs[ matrix.region ] == 'true' }}
+#        working-directory: ./tf
+#        run: |
+#          # init terraform
+#          terraform init
+#
+#          # select workspace or create if needed
+#          terraform workspace select ${{ matrix.region }}  || terraform workspace new ${{ matrix.region }}
+#
+#          # clean up the bot token
+#          export TF_VAR_botToken=no-token
+#
+#          # tf destroy
+#          terraform destroy -auto-approve -var-file=region.${{ matrix.region }}.tfvars
