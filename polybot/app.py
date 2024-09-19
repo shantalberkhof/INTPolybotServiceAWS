@@ -13,9 +13,8 @@ app = flask.Flask(__name__)
 
 # from the dockerfile
 REGION_NAME = os.environ['REGION_NAME'] # new from terraform
-SECRET_ID = os.environ['SECRET_ID'] # new from terraform
 DYNAMODB_TABLE = os.environ['DYNAMODB_TABLE'] # new from terraform
-SECRET_ID = os.environ['SECRET_ID'] # new from terraform
+# SECRET_ID = os.environ['SECRET_ID'] # new from terraform
 TELEGRAM_APP_URL = os.getenv('TELEGRAM_APP_URL')
 print(f"telegram app url: {TELEGRAM_APP_URL}")
 
@@ -34,10 +33,13 @@ logger = logging.getLogger()
 # TODO load TELEGRAM_TOKEN value from Secret Manager
 
 # way 1
-secretsmanager = boto3.client('secretsmanager', region_name=REGION_NAME)
-response = secretsmanager.get_secret_value(SecretId=SECRET_ID)
-secret = response['SecretString']
-TELEGRAM_TOKEN = secret
+#secretsmanager = boto3.client('secretsmanager', region_name=REGION_NAME)
+#response = secretsmanager.get_secret_value(SecretId=SECRET_ID)
+#secret = response['SecretString']
+TELEGRAM_TOKEN = load_telegram_token()
+if TELEGRAM_TOKEN:
+    print(f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}")
+    bot = ObjectDetectionBot(TELEGRAM_TOKEN, TELEGRAM_APP_URL)
 
 # way 2
 # TELEGRAM_TOKEN = load_telegram_token()

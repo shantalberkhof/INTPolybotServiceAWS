@@ -26,9 +26,10 @@ def get_secret(secret_name, region_name):
     return secret
 
 def load_telegram_token():
-    secret_name = 'shantal-telegram-bot-token'
+    #secret_name = 'shantal-telegram-bot-token'
     # region_name = 'us-east-2'
-    region_name=REGION_NAME
+    #region_name=REGION_NAME
+    secret_name = 'tf-telegram-botToken-us-east-1'
     secrets = get_secret(secret_name, REGION_NAME)
     if secrets is None:
         logger.error("Unable to retrieve secrets. Exiting.")
