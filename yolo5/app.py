@@ -25,7 +25,6 @@ dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
 table = dynamodb.Table(DYNAMODB_TABLE)
 # table = dynamodb.Table('shantal-dynamoDB-aws') # Set the table name
 
-
 # test 1
 with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
