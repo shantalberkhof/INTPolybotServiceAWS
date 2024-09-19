@@ -8,8 +8,8 @@ on:
       - main
 
 env:
-  EC2_PUBLIC_IP_POLYBOT1: 54.197.102.57 #needs to be changed in the if condition [ "$PUBLIC_IP" ==
-  EC2_PUBLIC_IP_POLYBOT2: 54.86.152.245 #needs to be changed in the if condition [ "$PUBLIC_IP" ==
+  EC2_PUBLIC_IP_POLYBOT1: 98.83.206.102 #needs to be changed in the if condition [ "$PUBLIC_IP" ==
+  EC2_PUBLIC_IP_POLYBOT2: 18.215.162.36 #needs to be changed in the if condition [ "$PUBLIC_IP" ==
 
 jobs:
   BuildPolybot:
@@ -91,7 +91,7 @@ jobs:
          
           CurKey=private_key1.pem
         
-          if [ "$PUBLIC_IP" == "54.86.152.245" ]; then
+          if [ "$PUBLIC_IP" == "18.215.162.36" ]; then
             CurKey=private_key2.pem
           fi
         
