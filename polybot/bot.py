@@ -7,6 +7,7 @@ import boto3
 import json
 import uuid
 import time
+from telebot.apihelper import ApiTelegramException
 # from app import REGION_NAME  # Import REGION_NAME from app.py
 import concurrent.futures
 REGION_NAME = os.environ['REGION_NAME']  # Access the environment variable directly in bot.py
@@ -20,6 +21,28 @@ class Bot:
         # remove any existing webhooks configured in Telegram servers
         self.telegram_bot_client.remove_webhook()
         time.sleep(0.5)
+        retries = 4
+        retry_delay = 1  # initial delay in seconds
+
+        for attempt in range(retries):
+            try:
+                # sets the webhook URL
+                self.telegram_bot_client.set_webhook(url=f'{telegram_chat_url}/{token}/', timeout=60) # option 2 - cert manager
+                logger.info(f'Telegram Bot information\n\n{self.telegram_bot_client.get_me()}')
+                break
+            except ApiTelegramException as e:
+                if e.error_code == 429:
+                    retry_after = int(e.result_json.get('parameters', {}).get('retry_after', retry_delay))
+                    logger.warning(f'Too Many Requests. Retrying after {retry_after} seconds...')
+                    time.sleep(retry_after)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    logger.error(f"Failed to set webhook: {e}")
+                    raise e  # Re-raise the exception for non-429 errors
+        else:
+            logger.error("Failed to set webhook after retries")
+
+
         # if token == '6889860814:AAGJU6KNTn0rmNx17XiI49IenE_642rvAnQ':
         #     retries = 4
         #     for _ in range(retries):
@@ -40,10 +63,7 @@ class Bot:
         #     else:
         #         logger.error("Failed to set webhook after retries")
 
-        # sets the webhook URL
-        self.telegram_bot_client.set_webhook(url=f'{telegram_chat_url}/{token}/', timeout=60) # option 2 - cert manager
 
-        logger.info(f'Telegram Bot information\n\n{self.telegram_bot_client.get_me()}')
 
     def send_text(self, chat_id, text):
         self.telegram_bot_client.send_message(chat_id, text)
