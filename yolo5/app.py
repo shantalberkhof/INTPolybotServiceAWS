@@ -192,7 +192,7 @@ def consume():
                             logger.info(f'TRY TO PERFORM A GET REQUEST 1: {callback_url}?predictionId={prediction_id}')
                           # response = requests.get(callback_url, params={'predictionId': prediction_id}, timeout=10)  # Timeout after 10 seconds
                             if prediction_id:
-                                response = requests.post(f"{callback_url}?predictionId={prediction_id}", timeout=10) # changed to post instead of get
+                                response = requests.get(f"{callback_url}?predictionId={prediction_id}", timeout=10)
                                 logger.info(f'SQS Response: {response}')
                                 logger.info(f'prediction_id is: {prediction_id}')
                             else:
