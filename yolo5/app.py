@@ -18,6 +18,7 @@ REGION_NAME = os.environ['REGION_NAME'] # new from terraform
 DYNAMODB_TABLE = os.environ['DYNAMODB_TABLE']  # DynamoDB table name
 ALB_URL = os.environ['ALB_URL']
 
+
 # queue_url= os.environ['https://sqs.us-east-2.amazonaws.com/019273956931/shantal-queue-aws']
 
 # Initialize AWS clients

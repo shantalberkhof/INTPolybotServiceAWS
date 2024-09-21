@@ -1,11 +1,10 @@
 name: Yolo5 Microservice Deployment
-# "Instance Refresh" in the ASG settings, which will gradually replace all instances with new ones that pull the latest Docker image.
 # docker run -it --name my_yolo5 -e REGION_NAME='us-east-1' -e BUCKET_NAME=tf-shantalberkhof-images-bucket-us-east-1 -e SQS_QUEUE_NAME=tf-shantalberkhof-project-queue shantalberkhof/my_yolo5:v2
-
+# Deploy the Polybot and the Yolo5 apps in their EC2 instances
 on:
   push:
     paths:
-      - 'yolo5/**'
+      - 'yolo5/**' # depends on paths inside yolo5
     branches:
       - main
 
