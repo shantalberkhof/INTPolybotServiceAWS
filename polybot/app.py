@@ -32,7 +32,7 @@ logger = logging.getLogger()
 
 # TODO load TELEGRAM_TOKEN value from Secret Manager
 
-# way 1
+# way 2
 #secretsmanager = boto3.client('secretsmanager', region_name=REGION_NAME)
 #response = secretsmanager.get_secret_value(SecretId=SECRET_ID)
 #secret = response['SecretString']
