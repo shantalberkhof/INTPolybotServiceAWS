@@ -1,5 +1,6 @@
 name: Yolo5 Microservice Deployment
-# docker run -it --name my_yolo5 -e REGION_NAME='us-east-1' -e BUCKET_NAME=tf-shantalberkhof-images-bucket-us-east-1 -e SQS_QUEUE_NAME=tf-shantalberkhof-project-queue shantalberkhof/my_yolo5:v2
+# Make sure to check that the ALB_URL and the queue_url are the same as they were
+# docker run -it --name my_yolo5 -e REGION_NAME='us-east-1' -e BUCKET_NAME=tf-shantalberkhof-images-bucket-us-east-1 -e DYNAMODB_TABLE=tf-shantalberkhof-predictions-dynamodb-table -e SQS_QUEUE_NAME=tf-shantalberkhof-project-queue -e ALB_URL=tf-shantalberkhof-polybot-lb-2036714467.us-east-1.elb.amazonaws.com shantalberkhof/my_yolo5:v2
 # Deploy the Polybot and the Yolo5 apps in their EC2 instances
 on:
   push:

@@ -187,7 +187,8 @@ class ObjectDetectionBot(Bot):
 
             # TODO send a job to the SQS queue
             # The job message contains information regarding the image to be processed, as well as the Telegram chat_id
-            queue_url = 'https://sqs.us-east-2.amazonaws.com/019273956931/shantal-queue-aws'
+            #queue_url = 'https://sqs.us-east-2.amazonaws.com/019273956931/shantal-queue-aws'
+            queue_url = 'https://sqs.us-east-1.amazonaws.com/019273956931/tf-shantalberkhof-project-queue'
             chat_id = msg['chat']['id']
             message_body = {
                 'bucket_name': bucket_name,
