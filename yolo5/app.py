@@ -28,7 +28,7 @@ dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
 
 # table = dynamodb.Table(DYNAMODB_TABLE)
 # table = dynamodb.Table('shantal-dynamoDB-aws') # Set the table name
-table = dynamodb.Table('tf-shantalberkhof-predictions-dynamodb-table') # Set the table name
+table = dynamodb.Table(DYNAMODB_TABLE) # Set the table name
 
 
 # Ensure the S3 directory exists
@@ -171,10 +171,13 @@ def consume():
 
                         # TODO store the prediction_summary in a DynamoDB table ---------------------------------------------------
 
-                        dynamodb.put_item(Item=prediction_summary)
-                        logger.info(f'SAVED PREDICTION SUMMARY to DynamoDB')
-                        logger.info(f'=========> Prediction summary: {prediction_summary}')
-                        time.sleep(3)  # Add a delay
+                        try:
+                            table.put_item(Item=prediction_summary)
+                            logger.info(f'SAVED PREDICTION SUMMARY to DynamoDB')
+                            logger.info(f'=========> Prediction summary: {prediction_summary}')
+                            time.sleep(3)  # Add a delay
+                        except Exception as e:
+                            logger.error(f'Error saving to DynamoDB: {e}')
 
                         # TODO perform a GET request to Polybot to `/results` endpoint ---------------------------------------------------
 
