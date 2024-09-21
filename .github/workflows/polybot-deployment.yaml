@@ -1,4 +1,5 @@
 name: Polybot Microservice Deployment
+# docker run --name my_polybot -p 8443:8443 -e REGION_NAME='us-east-1' -e DYNAMODB_TABLE='tf-shantalberkhof-predictions-dynamodb-table' shantalberkhof/my_polybot:v2
 # docker run --name my_polybot -p 8443:8443 -e REGION_NAME='us-east-1' -e DYNAMODB_TABLE='tf-shantalberkhof-predictions-dynamodb-table' -e TELEGRAM_APP_URL='6889860814:AAGJU6KNTn0rmNx17XiI49IenE_642rvAnQ' shantalberkhof/my_polybot:v2
 # Deploy the Polybot and the Yolo5 apps in their EC2 instances
 on:

@@ -11,7 +11,6 @@ from bot_functions import get_secret, load_telegram_token
 
 app = flask.Flask(__name__)
 
-
 # from the dockerfile
 REGION_NAME = os.environ['REGION_NAME'] # new from terraform
 DYNAMODB_TABLE = os.environ['DYNAMODB_TABLE'] # new from terraform

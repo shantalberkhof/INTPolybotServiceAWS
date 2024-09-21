@@ -25,6 +25,7 @@ def get_secret(secret_name, region_name):
     # Since the secret is a plain certificate string, return it as is
     return secret
 
+
 def load_telegram_token():
     #secret_name = 'shantal-telegram-bot-token'
     # region_name = 'us-east-2'
