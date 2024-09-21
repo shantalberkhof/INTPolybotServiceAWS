@@ -11,6 +11,7 @@ on:
 env:
   EC2_PUBLIC_IP_POLYBOT1: 54.160.51.241 #needs to be changed in the if condition [ "$PUBLIC_IP" ==
   EC2_PUBLIC_IP_POLYBOT2: 23.20.23.157 #needs to be changed in the if condition [ "$PUBLIC_IP" ==
+  # Also change below the target group arn
 
 jobs:
   BuildPolybot:
@@ -59,7 +60,8 @@ jobs:
         echo "${{ secrets.US_EAST_1_PRIVATE_KEY }}" > private_key2.pem
         chmod 400 private_key2.pem
         
-        POLYBOT_INSTANCES=$(aws elbv2 describe-target-health --target-group-arn ${{ secrets.POLYBOT_TARGET_GROUP_ARN1 }} --query 'TargetHealthDescriptions[*].Target.Id' --output text --region ${{ secrets.AWS_REGION2 }})
+        POLYBOT_TARGET_GROUP_ARN1=arn:aws:elasticloadbalancing:us-east-1:019273956931:targetgroup/tf-shantalberkhof-polybot-tg/6cde070c0a349802
+        POLYBOT_INSTANCES=$(aws elbv2 describe-target-health --target-group-arn ${{ POLYBOT_TARGET_GROUP_ARN1 }} --query 'TargetHealthDescriptions[*].Target.Id' --output text --region ${{ secrets.AWS_REGION2 }})
         echo "POLYBOT_INSTANCES: $POLYBOT_INSTANCES"
         
         for instance in $POLYBOT_INSTANCES; do
