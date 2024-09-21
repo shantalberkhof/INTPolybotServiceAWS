@@ -11,6 +11,7 @@ from telebot.apihelper import ApiTelegramException
 # from app import REGION_NAME  # Import REGION_NAME from app.py
 import concurrent.futures
 REGION_NAME = os.environ['REGION_NAME']  # Access the environment variable directly in bot.py
+bucket_name = 'tf-shantalberkhof-images-bucket-us-east-1'
 
 class Bot:
 
@@ -135,7 +136,7 @@ class ObjectDetectionBot(Bot):
         count = 1
         if msg.get('caption', '').lower() == "test":
             logger.info(f'Caption is test.')
-            count = 15 # Specify how many times to send the same image <---------------------
+            count = 3 # Specify how many times to send the same image <---------------------
             logger.info(f'Received "test" command. Sending {count} photos.')
 
         self.send_multiple_photos(msg, count)
@@ -164,7 +165,7 @@ class ObjectDetectionBot(Bot):
                     return
 
                 # TODO upload the photo to S3
-                bucket_name = 'shantal-awsproject'
+                # bucket_name = 'shantal-awsproject'
                 file_name = os.path.basename(path)
 
                 caption = f"Test image {i + 1}/{count}"
