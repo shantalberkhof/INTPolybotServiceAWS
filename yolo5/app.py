@@ -62,6 +62,8 @@ with open("data/coco128.yaml", "r") as stream:
 # The yolo5 takes the photo from the queue and saves the results to dynamoDB:
 # Acts as a consumer: consumes the jobs from the queue, downloads the image from S3, processes the image, and writes the results to a DynamoDB table
 def consume():
+    logger.info(
+        f"Bucket: {images_bucket}, SQS Queue: {queue_name}, Region: {REGION_NAME}, DynamoDB Table: {DYNAMODB_TABLE}, ALB URL: {ALB_URL}")
     while True:
         try:
             queue_url = sqs_client.get_queue_url(QueueName=queue_name)['QueueUrl']
@@ -190,7 +192,8 @@ def consume():
                             logger.info(f'TRY TO PERFORM A GET REQUEST 1: {callback_url}?predictionId={prediction_id}')
                           # response = requests.get(callback_url, params={'predictionId': prediction_id}, timeout=10)  # Timeout after 10 seconds
                             if prediction_id:
-                                response = requests.get(f"{callback_url}?predictionId={prediction_id}")
+                                response = requests.post(f"{callback_url}?predictionId={prediction_id}", timeout=10) # changed to post instead of get
+                                logger.info(f'SQS Response: {response}')
                                 logger.info(f'prediction_id is: {prediction_id}')
                             else:
                                 logger.info(f'prediction_id is none.')
