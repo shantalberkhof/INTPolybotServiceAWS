@@ -30,6 +30,31 @@ dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
 # table = dynamodb.Table(DYNAMODB_TABLE)
 # table = dynamodb.Table('shantal-dynamoDB-aws') # Set the table name
 
+
+# Ensure the S3 directory exists
+def ensure_s3_directory_exists(bucket_name, prefix):
+    """
+    Ensures that a 'directory' exists in the S3 bucket.
+    If it doesn't, create it by uploading an empty object with that prefix.
+    """
+    try:
+        # Check if the prefix (directory) exists
+        response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix, MaxKeys=1)
+        if 'Contents' in response:
+            logger.info(f"'{prefix}' already exists in S3 bucket '{bucket_name}'.")
+        else:
+            logger.info(f"'{prefix}' does not exist in S3 bucket '{bucket_name}'. Creating it...")
+            # Upload an empty object to create the "directory"
+            s3_client.put_object(Bucket=bucket_name, Key=f"{prefix}/")
+            logger.info(f"'{prefix}' created successfully.")
+    except Exception as e:
+        logger.error(f"Error ensuring S3 directory '{prefix}': {e}")
+        raise
+
+# Ensure that the 'predictions/' and 'data/' directories exist in S3
+ensure_s3_directory_exists(images_bucket, 'predictions')
+ensure_s3_directory_exists(images_bucket, 'data')
+
 # test 1
 with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
@@ -119,7 +144,6 @@ def consume():
 
                     image_name_s3_txt = image_name_s3.replace('.jpg', '.txt')
                     # Parse prediction labels and create a summary
-                    # pred_summary_path = Path(f'static/data/{prediction_id}/labels/{original_img_path}.txt')
                     pred_summary_path = Path(f'static/data/{prediction_id}/labels/{image_name_s3_txt}')
 
                     logger.info(f'pred_summary_path: {pred_summary_path}')
