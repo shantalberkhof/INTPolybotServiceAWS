@@ -5,6 +5,15 @@ resource "aws_security_group" "tf-polybot-alb-sg" {
   description = "SG for polybot alb access"
   vpc_id = var.vpc_id
 
+  # inbound rules for the /results endpoint
+    ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
   ingress {
     from_port   = 8443
     to_port     = 8443

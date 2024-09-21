@@ -1,4 +1,5 @@
 # region-specific variables, so it's possible to apply different configurations for different regions.
+# AWS_REGION3
 
 region = "eu-central-1"
 env    = "dev"

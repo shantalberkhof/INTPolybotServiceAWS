@@ -47,7 +47,7 @@ resource "aws_lb_listener" "alb_https" {
 
 resource "aws_lb_listener" "alb_http" {
   load_balancer_arn = aws_lb.alb.arn
-  port              = "8443"
+  port              = "80"  # inbound rules for the /results endpoint
   protocol          = "HTTP"
 
   default_action {
