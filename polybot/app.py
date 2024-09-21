@@ -20,7 +20,7 @@ print(f"telegram app url: {TELEGRAM_APP_URL}")
 
 # Initialize DynamoDB client
 dynamodb = boto3.resource('dynamodb', region_name=REGION_NAME)
-table = dynamodb.Table('DYNAMODB_TABLE')
+table = dynamodb.Table(DYNAMODB_TABLE)
 # table = dynamodb.Table('shantal-dynamoDB-aws')
 
 logging.basicConfig(level=logging.INFO)
