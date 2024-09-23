@@ -13,4 +13,3 @@ ENV TELEGRAM_APP_URL=https://shantalberkhof-polybot-us-east-1.int-devops.click
 RUN pip install boto3 telebot loguru
 
 CMD ["python3", "app.py"]
-

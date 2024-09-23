@@ -41,7 +41,6 @@ if TELEGRAM_TOKEN:
     print(f"TELEGRAM_TOKEN: {TELEGRAM_TOKEN}")
     bot = ObjectDetectionBot(TELEGRAM_TOKEN, TELEGRAM_APP_URL)
 
-
 # way 2
 # TELEGRAM_TOKEN = load_telegram_token()
 # if TELEGRAM_TOKEN:

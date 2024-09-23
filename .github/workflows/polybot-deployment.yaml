@@ -85,7 +85,7 @@ jobs:
          
           CurKey=private_key1.pem
         
-          if [ "$PUBLIC_IP" == "18.207.175.130" ]; then
+          if [ "$PUBLIC_IP" == "3.89.64.116" ]; then
             CurKey=private_key2.pem
           fi
         
